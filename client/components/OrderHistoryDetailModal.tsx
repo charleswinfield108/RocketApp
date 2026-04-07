@@ -108,6 +108,37 @@ export const OrderHistoryDetailModal: React.FC<OrderHistoryDetailModalProps> = (
               </View>
             </View>
 
+            {/* Courier Information (if available) */}
+            {order.courier && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Courier Information</Text>
+                <View style={styles.infoRow}>
+                  <Text style={styles.label}>Courier Name</Text>
+                  <Text style={styles.value}>{order.courier.name}</Text>
+                </View>
+                {order.courier.phone && (
+                  <View style={styles.infoRow}>
+                    <Text style={styles.label}>Phone</Text>
+                    <Text style={[styles.value, styles.phoneValue]}>
+                      {order.courier.phone}
+                    </Text>
+                  </View>
+                )}
+                {order.courier.status && (
+                  <View style={styles.infoRow}>
+                    <Text style={styles.label}>Courier Status</Text>
+                    <Text style={styles.value}>{capitalizeStatus(order.courier.status)}</Text>
+                  </View>
+                )}
+                {order.courier.deliveryTime && (
+                  <View style={styles.infoRow}>
+                    <Text style={styles.label}>Delivery Time</Text>
+                    <Text style={styles.value}>{order.courier.deliveryTime}</Text>
+                  </View>
+                )}
+              </View>
+            )}
+
             {/* Order Items */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Items</Text>
@@ -123,6 +154,14 @@ export const OrderHistoryDetailModal: React.FC<OrderHistoryDetailModalProps> = (
                 </View>
               ))}
             </View>
+
+            {/* Delivery Address (if available) */}
+            {order.deliveryAddress && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Delivery Address</Text>
+                <Text style={styles.addressText}>{order.deliveryAddress}</Text>
+              </View>
+            )}
 
             {/* Divider */}
             <View style={styles.divider} />
@@ -207,6 +246,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#222126',
+  },
+  phoneValue: {
+    color: '#DA583B',
+    textDecorationLine: 'underline',
+  },
+  addressText: {
+    fontSize: 13,
+    color: '#555555',
+    lineHeight: 20,
   },
   statusBadge: {
     alignSelf: 'flex-start',

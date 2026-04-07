@@ -7,6 +7,14 @@ export interface OrderItem {
   price: number;
 }
 
+export interface Courier {
+  courierId?: string;
+  name: string;
+  phone?: string;
+  status?: string;
+  deliveryTime?: string;
+}
+
 export interface Order {
   orderId: string;
   restaurantId: string;
@@ -14,7 +22,10 @@ export interface Order {
   status: 'confirmed' | 'preparing' | 'out for delivery' | 'delivered' | 'cancelled';
   totalPrice: number;
   createdAt: string;
+  deliveredAt?: string;
   items: OrderItem[];
+  courier?: Courier;
+  deliveryAddress?: string;
 }
 
 export interface OrderHistoryResponse {
@@ -27,7 +38,7 @@ export const orderHistoryAPI = {
     apiClient.get<OrderHistoryResponse>('/api/v1/customer/orders'),
   
   getOrderById: (orderId: string) =>
-    apiClient.get<Order>(`/api/v1/customer/orders/${orderId}`),
+    apiClient.get<{ order: Order }>(`/api/v1/customer/orders/${orderId}`),
 };
 
 export default orderHistoryAPI;
