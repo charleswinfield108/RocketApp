@@ -37,11 +37,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // Sign in function
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, token: string) => {
     try {
-      // JWT token will be returned from API and stored here
-      // This will be called from the login screen after successful API call
-      const token = 'dummy-token'; // Placeholder
+      // Store the JWT token from API
       await AsyncStorage.setItem('authToken', token);
       setAuthToken(token);
       setIsSignedIn(true);
