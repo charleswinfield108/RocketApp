@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   Modal,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 
 interface OrderItem {
@@ -20,9 +21,11 @@ interface ConfirmationModalProps {
   items: OrderItem[];
   totalPrice: number;
   restaurantName: string;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void>;
   onCancel: () => void;
 }
+
+type ModalState = 'idle' | 'processing' | 'success' | 'error';
 
 export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   visible,
@@ -32,20 +35,50 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   onConfirm,
   onCancel,
 }) => {
+  const [state, setState] = useState<ModalState>('idle');
+  const [errorMessage, setErrorMessage] = useState<string>('');
+
+  // Handle confirm button press
+  const handleConfirmPress = async () => {
+    setState('processing');
+    setErrorMessage('');
+    try {
+      await onConfirm();
+      setState('success');
+      // Auto-close after 2 seconds on success
+      setTimeout(() => {
+        handleClose();
+      }, 2000);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to place order. Please try again.';
+      setErrorMessage(message);
+      setState('error');
+    }
+  };
+
+  // Handle closing modal and resetting state
+  const handleClose = () => {
+    setState('idle');
+    setErrorMessage('');
+    onCancel();
+  };
+
   return (
     <Modal
       visible={visible}
       transparent
       animationType="slide"
-      onRequestClose={onCancel}
+      onRequestClose={handleClose}
     >
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Order Confirmation</Text>
-            <TouchableOpacity onPress={onCancel}>
-              <Text style={styles.closeButton}>✕</Text>
+            <TouchableOpacity onPress={handleClose} disabled={state === 'processing'}>
+              <Text style={[styles.closeButton, state === 'processing' && styles.closeButtonDisabled]}>
+                ✕
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -55,50 +88,99 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             <Text style={styles.restaurantName}>{restaurantName}</Text>
           </View>
 
-          {/* Order Items */}
-          <ScrollView style={styles.itemsContainer}>
-            {items.map((item) => (
-              <View key={item.id} style={styles.itemRow}>
-                <View style={styles.itemInfo}>
-                  <Text style={styles.itemName}>{item.name}</Text>
-                  <Text style={styles.itemQty}>Qty: {item.quantity}</Text>
-                </View>
-                <Text style={styles.itemPrice}>
-                  ${(item.price * item.quantity).toFixed(2)}
-                </Text>
+          {/* Success State */}
+          {state === 'success' && (
+            <View style={styles.successContainer}>
+              <Text style={styles.successIcon}>✓</Text>
+              <Text style={styles.successMessage}>Order placed successfully!</Text>
+            </View>
+          )}
+
+          {/* Error State */}
+          {state === 'error' && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorIcon}>✕</Text>
+              <Text style={styles.errorMessage}>{errorMessage}</Text>
+            </View>
+          )}
+
+          {/* Order Items (hidden in success state) */}
+          {state !== 'success' && (
+            <>
+              <ScrollView style={styles.itemsContainer}>
+                {items.map((item) => (
+                  <View key={item.id} style={styles.itemRow}>
+                    <View style={styles.itemInfo}>
+                      <Text style={styles.itemName}>{item.name}</Text>
+                      <Text style={styles.itemQty}>Qty: {item.quantity}</Text>
+                    </View>
+                    <Text style={styles.itemPrice}>
+                      ${(item.price * item.quantity).toFixed(2)}
+                    </Text>
+                  </View>
+                ))}
+              </ScrollView>
+
+              {/* Divider */}
+              <View style={styles.divider} />
+
+              {/* Total */}
+              <View style={styles.totalSection}>
+                <Text style={styles.totalLabel}>Total</Text>
+                <Text style={styles.totalPrice}>${totalPrice.toFixed(2)}</Text>
               </View>
-            ))}
-          </ScrollView>
-
-          {/* Divider */}
-          <View style={styles.divider} />
-
-          {/* Total */}
-          <View style={styles.totalSection}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalPrice}>${totalPrice.toFixed(2)}</Text>
-          </View>
+            </>
+          )}
 
           {/* Action Buttons */}
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
-              onPress={onCancel}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.buttonText, styles.cancelButtonText]}>Cancel</Text>
-            </TouchableOpacity>
+          {state !== 'success' && (
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  styles.cancelButton,
+                  state === 'processing' && styles.buttonDisabled,
+                ]}
+                onPress={handleClose}
+                disabled={state === 'processing'}
+                activeOpacity={0.8}
+              >
+                <Text
+                  style={[
+                    styles.buttonText,
+                    styles.cancelButtonText,
+                    state === 'processing' && styles.buttonTextDisabled,
+                  ]}
+                >
+                  Cancel
+                </Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.button, styles.confirmButton]}
-              onPress={onConfirm}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.buttonText, styles.confirmButtonText]}>
-                Confirm Order
-              </Text>
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  styles.confirmButton,
+                  state === 'processing' && styles.buttonDisabled,
+                ]}
+                onPress={handleConfirmPress}
+                disabled={state === 'processing'}
+                activeOpacity={0.8}
+              >
+                {state === 'processing' ? (
+                  <View style={styles.processingContent}>
+                    <ActivityIndicator size="small" color="#FFFFFF" style={styles.spinner} />
+                    <Text style={[styles.buttonText, styles.confirmButtonText]}>
+                      Processing Order…
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={[styles.buttonText, styles.confirmButtonText]}>
+                    Confirm Order
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </View>
     </Modal>
@@ -137,6 +219,9 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#666666',
   },
+  closeButtonDisabled: {
+    color: '#CCCCCC',
+  },
   restaurantSection: {
     marginBottom: 12,
   },
@@ -150,6 +235,47 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#222126',
+  },
+  successContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    marginBottom: 16,
+  },
+  successIcon: {
+    fontSize: 60,
+    color: '#4CAF50',
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  successMessage: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#4CAF50',
+    textAlign: 'center',
+  },
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    marginBottom: 16,
+    backgroundColor: '#FFF5F5',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FFEBEE',
+  },
+  errorIcon: {
+    fontSize: 50,
+    color: '#F44336',
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  errorMessage: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#F44336',
+    textAlign: 'center',
+    paddingHorizontal: 12,
   },
   itemsContainer: {
     maxHeight: 250,
@@ -217,6 +343,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1.5,
   },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
   cancelButton: {
     backgroundColor: '#FFFFFF',
     borderColor: '#E0E0E0',
@@ -229,10 +358,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  buttonTextDisabled: {
+    color: '#CCCCCC',
+  },
   cancelButtonText: {
     color: '#666666',
   },
   confirmButtonText: {
     color: '#FFFFFF',
+  },
+  processingContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  spinner: {
+    marginRight: 4,
   },
 });

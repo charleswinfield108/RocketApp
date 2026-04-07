@@ -14,7 +14,7 @@ import { useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { MenuItemComponent, MenuItem } from '../../../components/MenuItem';
 import { ConfirmationModal } from '../../../components/ConfirmationModal';
 import menuAPI from '../../../services/menuService';
-import { restaurantsAPI } from '../../../services/api';
+import { restaurantsAPI, ordersAPI } from '../../../services/api';
 
 interface CartItem extends MenuItem {
   quantity: number;
@@ -132,11 +132,41 @@ export default function RestaurantDetailScreen() {
     setIsConfirmationModalVisible(true);
   };
 
-  const handleConfirmOrder = () => {
-    // TODO: Submit order to API
-    setIsConfirmationModalVisible(false);
-    Alert.alert('Success', 'Order placed successfully!');
-    resetCart();
+  const handleConfirmOrder = async () => {
+    // Prepare order data
+    const orderItems = Object.entries(cart)
+      .filter(([, quantity]) => quantity > 0)
+      .map(([itemId, quantity]) => ({
+        menuItemId: itemId,
+        quantity,
+      }));
+
+    if (orderItems.length === 0) {
+      throw new Error('Please select at least one item');
+    }
+
+    try {
+      // Submit order to API
+      const orderData = {
+        restaurantId: currentRestaurantId,
+        items: orderItems,
+        totalPrice,
+      };
+
+      const response = await ordersAPI.create(orderData);
+      
+      if (response.status === 201 || response.status === 200) {
+        // Clear cart after successful order
+        resetCart();
+        // Close modal after success (handled by ConfirmationModal auto-close)
+      } else {
+        throw new Error('Order submission failed');
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to place order. Please try again.';
+      throw new Error(errorMessage);
+    }
   };
 
   if (loading) {
