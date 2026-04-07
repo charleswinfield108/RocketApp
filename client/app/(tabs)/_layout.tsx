@@ -1,8 +1,9 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faUtensils, faHistory, faUser } from '@fortawesome/free-solid-svg-icons';
 
 import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
@@ -13,21 +14,41 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarInactiveTintColor: Colors[colorScheme ?? 'light'].tabIconDefault,
         headerShown: false,
         tabBarButton: HapticTab,
-      }}>
+      }}
+    >
+      {/* Restaurants Tab - with nested stack navigator */}
       <Tabs.Screen
-        name="index"
+        name="(restaurant)"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'Restaurants',
+          tabBarIcon: ({ color }) => (
+            <FontAwesomeIcon icon={faUtensils as any} size={24} color={color} />
+          ),
         }}
       />
+
+      {/* Order History Tab */}
       <Tabs.Screen
-        name="explore"
+        name="history"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'History',
+          tabBarIcon: ({ color }) => (
+            <FontAwesomeIcon icon={faHistory as any} size={24} color={color} />
+          ),
+        }}
+      />
+
+      {/* Profile Tab */}
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => (
+            <FontAwesomeIcon icon={faUser as any} size={24} color={color} />
+          ),
         }}
       />
     </Tabs>
