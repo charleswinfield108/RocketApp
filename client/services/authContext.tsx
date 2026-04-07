@@ -6,6 +6,7 @@ interface AuthContextType {
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  signout: () => Promise<void>; // alias for signOut
   authToken: string | null;
 }
 
@@ -67,6 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isLoading,
     signIn,
     signOut,
+    signout: signOut, // alias for convenience
     authToken,
   };
 
