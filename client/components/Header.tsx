@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Image } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faRocket, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/services/authContext';
@@ -39,10 +39,10 @@ export const Header: React.FC<HeaderProps> = ({ onLogout }) => {
     <View style={styles.header}>
       {/* Logo Section */}
       <View style={styles.logoContainer}>
-        <FontAwesomeIcon 
-          icon={faRocket as any} 
-          size={24} 
-          color="#FF6B6B" 
+        <Image 
+          source={require('@/assets/images/AppLogoV2.png')}
+          style={styles.logoImage}
+          resizeMode="contain"
         />
         <Text style={styles.logoText}>Rocket Food</Text>
       </View>
@@ -51,12 +51,12 @@ export const Header: React.FC<HeaderProps> = ({ onLogout }) => {
       <TouchableOpacity 
         onPress={handleLogout}
         style={styles.logoutButton}
-        activeOpacity={0.7}
+        activeOpacity={0.85}
       >
         <FontAwesomeIcon 
           icon={faSignOutAlt as any} 
-          size={20} 
-          color="#FF6B6B"
+          size={16} 
+          color="#FFFFFF"
         />
         <Text style={styles.logoutText}>Log Out</Text>
       </TouchableOpacity>
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
     paddingTop: Platform.OS === 'ios' ? 12 : 8,
@@ -81,23 +81,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  logoImage: {
+    width: 32,
+    height: 32,
+  },
   logoText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#11181C',
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#222126',
+    letterSpacing: 0.5,
   },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 6,
-    backgroundColor: '#FFF5F5',
+    borderRadius: 4,
+    backgroundColor: '#DA583B',
   },
   logoutText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#FF6B6B',
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });
