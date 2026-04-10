@@ -24,6 +24,12 @@ export const Colors = {
   },
 };
 
+export const OswaldFonts = {
+  regular: 'Oswald_400Regular',
+  semiBold: 'Oswald_600SemiBold',
+  bold: 'Oswald_700Bold',
+};
+
 export const Fonts = Platform.select({
   ios: {
     /** iOS `UIFontDescriptorSystemDesignDefault` */

@@ -8,6 +8,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { Order } from '../services/orderHistoryService';
+import { OswaldFonts } from '@/constants/theme';
 
 interface OrderHistoryDetailModalProps {
   visible: boolean;
@@ -110,7 +111,7 @@ const styles = StyleSheet.create({
   },
   restaurantName: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: OswaldFonts.bold,
     color: '#DA583B',
     marginBottom: 6,
   },

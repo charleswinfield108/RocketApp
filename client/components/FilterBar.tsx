@@ -21,9 +21,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
   const ratingOptions = [
     { label: '-- Select --', value: null },
-    { label: '★ 4+', value: 4 },
-    { label: '★★ 3+', value: 3 },
-    { label: '★★★ 2+', value: 2 },
+    { label: '★★★★ 4+', value: 4 },
+    { label: '★★★ 3+', value: 3 },
+    { label: '★★ 2+', value: 2 },
   ];
 
   const priceOptions = [
@@ -35,9 +35,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
   const getRatingLabel = (value: number | null) => {
     if (value === null) return '-- Select --';
-    if (value === 4) return '★ 4+';
-    if (value === 3) return '★★ 3+';
-    if (value === 2) return '★★★ 2+';
+    if (value === 4) return '★★★★ 4+';
+    if (value === 3) return '★★★ 3+';
+    if (value === 2) return '★★ 2+';
     return '-- Select --';
   };
 

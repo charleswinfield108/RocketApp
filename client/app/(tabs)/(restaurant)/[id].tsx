@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { OswaldFonts } from '@/constants/theme';
 import { MenuItemComponent, MenuItem } from '../../../components/MenuItem';
 import { ConfirmationModal } from '../../../components/ConfirmationModal';
 import { Header } from '../../../components/Header';
@@ -70,12 +71,12 @@ export default function RestaurantDetailScreen() {
         initialCart[item.id] = 0;
       });
       setCart(initialCart);
-    } catch (err) {
+    } catch {
       setError('Failed to load menu. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [currentRestaurantId, resetCart]);
+  }, [id, currentRestaurantId, resetCart]);
 
   useEffect(() => {
     loadMenu();
@@ -227,7 +228,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: OswaldFonts.bold,
     color: '#222126',
     paddingHorizontal: 16,
     paddingTop: 16,
@@ -248,7 +249,7 @@ const styles = StyleSheet.create({
   },
   restaurantName: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: OswaldFonts.bold,
     color: '#222126',
     marginBottom: 2,
   },

@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/services/authContext';
 import { authAPI } from '@/services/api';
+import { OswaldFonts } from '@/constants/theme';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -205,7 +206,7 @@ const styles = StyleSheet.create({
   },
   welcomeTitle: {
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: OswaldFonts.bold,
     color: '#222126',
     marginBottom: 4,
   },

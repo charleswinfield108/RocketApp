@@ -283,12 +283,9 @@ export const Header: React.FC = () => {
   const router = useRouter();
 
   const handleLogout = async () => {
-    try {
-      await AsyncStorage.removeItem('authToken');
-      router.replace('/(auth)/login');
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
+    await AsyncStorage.removeItem('authToken');
+    await AsyncStorage.removeItem('customerId');
+    router.replace('/(auth)/login');
   };
 
   return (

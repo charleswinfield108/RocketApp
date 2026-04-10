@@ -1,0 +1,280 @@
+================================================================================
+  ROCKETFOOD DELIVERY — CONCEPTS VIDEO SCRIPT (~7-9 MINUTES)
+  Charles Winfield
+================================================================================
+
+
+--------------------------------------------------------------------------------
+INTRO (0:00 – 0:30)
+--------------------------------------------------------------------------------
+
+"Hi, my name is Charles Winfield. In this video I'll be explaining three
+concepts I found particularly challenging while building my RocketFood Delivery
+project. I'll cover what each concept is, why it was difficult, and exactly how
+I solved it in the code."
+
+
+================================================================================
+CONCEPT 1 — WSL2 NETWORK CONFIGURATION FOR PHYSICAL DEVICE TESTING
+(0:30 – 2:45)
+================================================================================
+
+--------------------------------------------------------------------------------
+What is WSL2 and why does it cause a problem? (0:30 – 1:15)
+--------------------------------------------------------------------------------
+
+"The first challenge was getting the app to actually open on my iPhone for
+testing. I develop inside WSL2 — Windows Subsystem for Linux — which lets me run
+a Linux environment on Windows. The problem is that WSL2 is not just a program
+running on Windows — it runs inside its own virtualised network with its own
+internal IP address. In my case that was something in the 192.168.86 range.
+
+When I ran npx expo start, the QR code it generated contained that WSL2 IP
+address. My phone scanned the code, tried to connect to that IP, and timed out
+every single time — because that internal IP only exists between Windows and WSL2.
+My phone has no path to it.
+
+On top of that, Expo has a built-in tunnel feature using ngrok that's supposed
+to solve this, but it's broken with the current version of ngrok due to an API
+format change. It crashes with an error about reading a property called 'body'
+from undefined. So that option was off the table."
+
+
+--------------------------------------------------------------------------------
+How I solved it — three steps (1:15 – 2:30)
+--------------------------------------------------------------------------------
+
+"The fix required three steps on the Windows side and one command change on the
+Linux side.
+
+Step one — Windows Firewall. By default, Windows blocks incoming connections to
+port 8081, which is the port Expo's Metro bundler runs on. I opened PowerShell
+as Administrator and added a firewall rule to allow inbound TCP traffic on
+port 8081. Without this, even if the phone could reach the right IP, the
+connection would be silently blocked.
+
+Step two — Port Proxy. I ran a netsh command to set up a port proxy. This tells
+Windows: whenever a connection arrives on port 8081 from any source, forward it
+to the WSL2 IP on port 8081. So now the phone connects to the Windows Wi-Fi IP,
+Windows forwards that connection into WSL2, and WSL2 handles it.
+
+Step three — the Expo host override. Even with the proxy set up, the QR code
+still showed the WSL2 IP — so my phone would try to connect to the wrong address.
+The fix was an environment variable called REACT_NATIVE_PACKAGER_HOSTNAME. I set
+it to my Windows Wi-Fi IP — 192.168.1.5 — before starting Expo. This overrides
+what Expo puts in the QR code. Now the QR code shows 192.168.1.5, my phone
+connects to that Windows IP, the port proxy forwards it to WSL2, and the app
+loads."
+
+
+--------------------------------------------------------------------------------
+Takeaway (2:30 – 2:45)
+--------------------------------------------------------------------------------
+
+"The lesson here is that WSL2 is not fully transparent to the network. It has
+its own IP and its own routing, which means anything that needs to receive
+connections from outside — like a development server — requires explicit
+forwarding setup on the Windows side."
+
+
+================================================================================
+CONCEPT 2 — FILTERING WITH HUMAN-READABLE LABELS VS. NUMERIC DATA
+(2:45 – 5:30)
+================================================================================
+
+--------------------------------------------------------------------------------
+The disconnect between display and data (2:45 – 3:30)
+--------------------------------------------------------------------------------
+
+"The second challenge was the restaurant filter. The dropdowns show symbols —
+stars for rating, dollar signs for price. But the database doesn't store stars
+and dollar signs. It stores plain integers. A restaurant might have a rating of
+4 and a price_range of 2. So I had to bridge between what the user sees and what
+the data actually contains.
+
+The first bug I ran into was that my star labels were inverted. I had one star
+symbol next to '4+', two stars next to '3+', and three stars next to '2+'. The
+more stars you selected, the lower the rating you were filtering for — which is
+completely backwards. A user seeing three stars expects to be looking at
+high-quality restaurants, not the lowest tier. The fix was straightforward once
+I spotted it — make the number of star characters match the filter value. Four
+stars for 4+, three stars for 3+, two stars for 2+."
+
+
+--------------------------------------------------------------------------------
+The operator difference — >= vs === (3:30 – 4:45)
+--------------------------------------------------------------------------------
+
+"The more interesting challenge was the filtering logic itself, and specifically
+which comparison operator to use for each filter — and why they're different.
+
+For rating, I use greater-than-or-equal: r.rating >= selectedRating.
+The reason is that rating is a minimum threshold. If a user selects three stars,
+they want to see restaurants rated three, four, or five — anything at or above
+that level. Using strict equality — triple equals — would show only restaurants
+rated exactly three, which is not what the user expects from a 'three stars and
+above' filter.
+
+For price, I use strict equality: r.price_range === selectedPrice.
+The reason is that price is a category, not a scale. Dollar-sign, dollar-dollar,
+dollar-dollar-dollar are distinct tiers. If a user selects dollar-dollar, they
+want to see only dollar-dollar restaurants — not dollar-dollar-dollar. There is
+no 'dollar-dollar and above' intention here. So strict equality is correct.
+
+Getting this wrong produces a filter that appears to work but gives wrong results.
+For example, with >= on price, selecting $ would show all restaurants including
+$$$ because 3 is greater than or equal to 1.
+
+The null check comes before both of these. selectedRating and selectedPrice are
+initialised to null — not zero — because zero would be a valid number that could
+accidentally match data. Null clearly means 'no filter selected'. The condition
+checks if the value is not null before applying the filter. If both are null, the
+full restaurant list is displayed unchanged."
+
+
+--------------------------------------------------------------------------------
+How the two filters interact (4:45 – 5:15)
+--------------------------------------------------------------------------------
+
+"Both filters run on the same local variable inside a single useEffect. The
+useEffect watches three values in its dependency array — selectedRating,
+selectedPrice, and the full restaurants array. Whenever any of those change, the
+filter logic re-runs from scratch.
+
+Inside it, a local variable starts as the full list, then the rating filter runs
+on it, then the price filter runs on the result of that. Because they chain on
+the same variable, both filters are active simultaneously when both are selected.
+This is simpler than it sounds — it's just two filter calls in sequence."
+
+
+--------------------------------------------------------------------------------
+Takeaway (5:15 – 5:30)
+--------------------------------------------------------------------------------
+
+"The lesson is that display values and data values are not the same thing, and
+the comparison operator you choose must match the semantic meaning of the filter —
+minimum threshold versus exact category match."
+
+
+================================================================================
+CONCEPT 3 — EXPO ROUTER FILE-BASED NAVIGATION WITH AUTHENTICATION GUARD
+(5:30 – 8:30)
+================================================================================
+
+--------------------------------------------------------------------------------
+What is Expo Router and why is it different? (5:30 – 6:15)
+--------------------------------------------------------------------------------
+
+"The third challenge was learning Expo Router, which handles all navigation in
+the app. I had no prior experience with it. In traditional React Navigation you
+define your routes in code — you create a stack, list your screens, and wire them
+together manually. Expo Router works differently. Every file you create inside
+the app folder automatically becomes a route. The file name is the URL path.
+There is no central route configuration file.
+
+The parenthesised folders — like (auth) and (tabs) — are called route groups.
+They let you organise files into folders without those folder names appearing in
+the URL. So app/(auth)/login.tsx becomes the /login route, not /(auth)/login.
+This was confusing at first because the folder exists on disk but is invisible
+to the router."
+
+
+--------------------------------------------------------------------------------
+replace vs push — why it matters for auth (6:15 – 7:00)
+--------------------------------------------------------------------------------
+
+"The navigation method I use throughout the app is router.replace, not
+router.push. The difference is important for security.
+
+Push adds the new screen on top of the navigation stack. The previous screen is
+still there underneath, and the user can press the back button to return to it.
+
+Replace swaps the current screen and removes the previous one from the stack.
+There is nothing to go back to.
+
+For authentication this matters a lot. After logging in, the user should not be
+able to press back and land on the login screen while already authenticated.
+After logging out, the user should not be able to press back and return to the
+restaurant page without credentials. Using replace for both transitions prevents
+this entirely."
+
+
+--------------------------------------------------------------------------------
+The isLoading gate — why it exists (7:00 – 8:00)
+--------------------------------------------------------------------------------
+
+"The trickiest part of Expo Router was building the authentication guard in the
+root layout. The guard uses a useEffect that watches two values — isSignedIn and
+isLoading — and calls router.replace based on which is true.
+
+The isLoading flag exists specifically to handle a timing problem. When the app
+starts, the auth context runs a check — it reads the saved token from
+AsyncStorage, the device's persistent storage. This is an asynchronous operation.
+It takes a moment. During that moment, isSignedIn is still false because the
+check hasn't finished.
+
+If I didn't have isLoading, the useEffect would fire immediately on app launch,
+see isSignedIn as false, and redirect to the login screen — even if the user had
+a perfectly valid saved session. The user would be logged out on every app
+restart.
+
+isLoading starts as true. The useEffect checks it first: if isLoading is true,
+do nothing and exit. Once AsyncStorage finishes, isLoading is set to false, the
+useEffect re-runs, and now it can trust the value of isSignedIn.
+
+This two-variable pattern — one for the actual state, one for whether the state
+is ready to be read — is a common pattern in React for any asynchronous
+initialisation. I had to understand it conceptually before the navigation
+behaviour made sense."
+
+
+--------------------------------------------------------------------------------
+Takeaway (8:00 – 8:30)
+--------------------------------------------------------------------------------
+
+"The lesson from Expo Router is that file structure is API — the way you name and
+organise files directly determines how your app navigates. And the lesson from
+the auth guard is that async state initialisation requires a loading flag to
+prevent premature decisions based on default values that haven't been populated
+yet."
+
+
+================================================================================
+CLOSING (8:30 – 9:00)
+================================================================================
+
+"Those are the three concepts I found most challenging in this project — WSL2
+networking for device testing, bridging display labels and numeric filter data,
+and building a correct authentication guard with Expo Router. Each one required
+understanding not just what the code does but why specific conditions, operators,
+and state values are necessary. Thanks for watching."
+
+
+================================================================================
+TIMING SUMMARY
+================================================================================
+
+  Intro .......................................... 0:00 – 0:30
+
+  CONCEPT 1 — WSL2 Networking
+    What WSL2 is and why it breaks Expo ......... 0:30 – 1:15
+    Three-step fix ............................... 1:15 – 2:30
+    Takeaway ..................................... 2:30 – 2:45
+
+  CONCEPT 2 — Filter Labels vs. Numeric Data
+    The display/data disconnect .................. 2:45 – 3:30
+    >= vs === operator difference ................ 3:30 – 4:45
+    How both filters interact .................... 4:45 – 5:15
+    Takeaway ..................................... 5:15 – 5:30
+
+  CONCEPT 3 — Expo Router & Auth Guard
+    File-based routing explained ................. 5:30 – 6:15
+    replace vs push .............................. 6:15 – 7:00
+    The isLoading gate ........................... 7:00 – 8:00
+    Takeaway ..................................... 8:00 – 8:30
+
+  Closing ........................................ 8:30 – 9:00
+
+  TOTAL: ~9 minutes
+
+================================================================================

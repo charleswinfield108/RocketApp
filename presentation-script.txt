@@ -1,0 +1,370 @@
+================================================================================
+  ROCKETFOOD DELIVERY — PRESENTATION SCRIPT (~13-15 MINUTES)
+  Charles Winfield
+================================================================================
+
+
+--------------------------------------------------------------------------------
+INTRO (0:00 – 0:30)
+--------------------------------------------------------------------------------
+
+"Hi, my name is Charles Winfield. This is my Module 13 project — RocketFood
+Delivery, a full-stack mobile food delivery application. The video is split into
+two parts. Part one is a live functional demonstration. Part two is an in-depth
+code walkthrough where I'll explain the internal logic, the specific variables
+and conditions used, and the reasoning behind each decision."
+
+
+================================================================================
+PART 1 — FUNCTIONAL DEMONSTRATION (0:30 – 4:30)
+================================================================================
+
+
+--------------------------------------------------------------------------------
+Login (0:30 – 1:15)
+--------------------------------------------------------------------------------
+
+"The app opens on the login screen because there is no saved session. I'll
+demonstrate validation first — submitting with an empty email field triggers a
+client-side check before any network call is made, and the error renders inline
+above the login button. Entering a wrong password sends the request to the API,
+which returns a 401, and that error message is extracted from the response and
+displayed in the same place.
+
+Logging in with valid credentials — customer@gmail.com, password — shows a
+loading spinner while the API responds, then navigates to the restaurant page."
+
+
+--------------------------------------------------------------------------------
+Restaurant List & Filters (1:15 – 2:00)
+--------------------------------------------------------------------------------
+
+"All restaurants load from the API on mount. Each card shows a restaurant image
+drawn from the local image library, the name, price range, and star rating. The
+two dropdowns default to 'Select' with no filter applied. Selecting four stars
+filters to restaurants rated four and above. Combining that with a price filter
+further narrows the list. Clearing both resets to the full list."
+
+
+--------------------------------------------------------------------------------
+Menu & Order (2:00 – 3:00)
+--------------------------------------------------------------------------------
+
+"Tapping a card opens that restaurant's menu. Quantities all start at zero. The
+minus button is visually disabled at zero and cannot go lower. The only way to
+change a quantity is the plus and minus buttons — there is no text input. The
+Create Order button stays grayed out and disabled until at least one item has a
+quantity above zero. Adding items enables it, and tapping it opens the
+confirmation modal."
+
+
+--------------------------------------------------------------------------------
+Confirmation Modal (3:00 – 3:45)
+--------------------------------------------------------------------------------
+
+"The modal shows the order summary and total. Tapping Confirm Order disables the
+button and switches the text to 'Processing Order…' with a spinner. On success,
+the button disappears and a green checkmark appears with a success message. If
+the API call fails, a red cross icon appears with the error message, and the
+Confirm Order button comes back enabled so the user can try again."
+
+
+--------------------------------------------------------------------------------
+Order History (3:45 – 4:30)
+--------------------------------------------------------------------------------
+
+"The history tab lists all past orders. Tapping the view icon for any row opens
+a detail modal for that specific order — restaurant name, date, status, courier
+assignment, itemised list, and total. The modal is populated entirely from the
+data passed to it, so each row opens its own independent modal."
+
+
+================================================================================
+PART 2 — CODE EXPLANATION (4:30 – 13:15)
+================================================================================
+
+
+--------------------------------------------------------------------------------
+Project Structure (4:30 – 5:15)
+--------------------------------------------------------------------------------
+
+"Before going into specific logic, here is the structure. The client is a React
+Native TypeScript app using Expo Router for file-based navigation. Every file
+inside the app folder automatically becomes a route. The parenthesised folders —
+auth and tabs — are route groups. They organise screens without adding to the
+URL path. So app/(auth)/login.tsx is the login screen, and
+app/(tabs)/(restaurant)/index.tsx is the restaurant list — but the URL only
+shows /login and /(restaurant), not the group names.
+
+The services folder contains the Axios instance, the auth context, and one file
+per API resource. The components folder contains all reusable UI pieces. The
+server is a standard Spring Boot project — controllers receive requests, services
+contain business logic, models are JPA entities mapped to MySQL tables."
+
+
+--------------------------------------------------------------------------------
+Authentication Context — Variables & State (5:15 – 6:30)
+--------------------------------------------------------------------------------
+
+"The AuthContext is the most important file in the client. Let me open it and
+walk through it precisely.
+
+At the top, four state variables are declared using useState. isSignedIn is a
+boolean — false by default. isLoading is also boolean — true by default, and
+this is important, I'll explain why in a moment. authToken holds a string or
+null — it starts as null because no token exists yet. customerId is the same —
+string or null.
+
+When the component mounts, a useEffect runs with an empty dependency array,
+meaning it runs exactly once. Inside it, AsyncStorage.getItem is called for both
+the token and the customer ID. AsyncStorage is a key-value store that persists
+on the device across app restarts. The keys are the strings 'authToken' and
+'customerId'. If both values come back non-null, setIsSignedIn is called with
+true. This is how the app restores a previous session without asking the user to
+log in again.
+
+The reason isLoading starts as true is to prevent the navigation guard from
+firing before this check finishes. If isLoading started as false, the useEffect
+in the root layout would immediately see isSignedIn as false and redirect to
+login — even if there is a valid saved token. Starting isLoading as true holds
+the app on a loading screen until AsyncStorage has been read, then sets it to
+false regardless of outcome.
+
+The signIn function takes three parameters — email, token, and customerId. It
+calls AsyncStorage.setItem for each key-value pair, then updates all four state
+variables. The signOut function does the reverse — removeItem for both keys,
+then resets isSignedIn to false and authToken to null."
+
+
+--------------------------------------------------------------------------------
+Root Layout — Navigation Guard (6:30 – 7:30)
+--------------------------------------------------------------------------------
+
+"The root layout's job is to enforce authentication. Inside RootLayoutNav, a
+useEffect has a dependency array containing isSignedIn and isLoading. This means
+it re-runs whenever either of those values changes.
+
+The very first line inside that useEffect is: if (!isLoading). This condition is
+the gate. If isLoading is still true — meaning AsyncStorage hasn't finished
+reading yet — the entire block is skipped. Nothing happens. Once isLoading
+becomes false, the condition passes and we check isSignedIn.
+
+If isSignedIn is true, router.replace is called with the restaurant route. If
+false, router.replace is called with the login route. The key method here is
+replace, not push. The difference is that push adds a new screen on top of the
+navigation stack, so the user could press back to return to the previous screen.
+Replace swaps the current screen entirely, removing it from the stack. This means
+after login you cannot press back to get to the login screen, and after logout
+you cannot press back to get to the authenticated screens.
+
+While isLoading is true, the component returns an ActivityIndicator — a
+full-screen spinner. This is the loading gate that prevents any flash of the
+wrong screen."
+
+
+--------------------------------------------------------------------------------
+Restaurant Filtering — Conditions & Operators (7:30 – 8:45)
+--------------------------------------------------------------------------------
+
+"The restaurant list uses two separate state variables for the filters —
+selectedRating and selectedPrice — both initialised to null. Null here represents
+'no filter selected', not zero, because zero would be a valid number that could
+conflict with actual rating values.
+
+There are two useEffect hooks. The first fetches restaurants from the API on
+mount and stores the full list in the restaurants state variable. The second
+applies filters and has a dependency array containing selectedRating,
+selectedPrice, and restaurants. Whenever any of those three change, the filter
+logic re-runs.
+
+Inside that second useEffect, a local variable called filtered starts as a copy
+of the full restaurants array. Then two conditional blocks run in sequence.
+
+The first checks: if (selectedRating !== null). The strict not-equal operator is
+used — triple equals — because we specifically want to distinguish null from
+zero. If the condition passes, filter is called on the array. The callback
+receives each restaurant object r and returns the boolean expression:
+r.rating >= selectedRating. The greater-than-or-equal operator is correct here
+because selecting '3 stars' should show restaurants rated 3, 4, or 5 — not only
+exactly 3. It is a minimum threshold, not an exact match.
+
+The second block checks: if (selectedPrice !== null) and uses
+r.price_range === selectedPrice with triple equals. This is an exact match
+because price range is a category — 1 dollar, 2 dollars, or 3 dollars — not a
+minimum. Selecting dollar-dollar should show only dollar-dollar restaurants, not
+dollar-dollar-dollar as well.
+
+After both blocks, setFilteredRestaurants is called with the result. Because both
+blocks run on the same local variable in sequence, they can both be active at
+once — rating and price filter together."
+
+
+--------------------------------------------------------------------------------
+Cart State & Stepper Logic (8:45 – 10:00)
+--------------------------------------------------------------------------------
+
+"The cart is a single state variable with the TypeScript type
+Record<string, number>. This is a plain object where every key is a string —
+the menu item ID — and every value is a number — the quantity. It is declared
+with useState and an empty object as the initial value.
+
+When the menu loads, a loop runs over all fetched items and builds an initialCart
+object, setting every item ID to zero. This is then passed to setCart. This
+ensures every item has an entry in the cart from the start, which prevents
+undefined errors when reading quantities later.
+
+The handleQuantityChange function takes two arguments — itemId and newQuantity.
+Inside, setCart is called with a functional update. The functional form — passing
+a callback to setState rather than a value — is used here because the new state
+depends on the previous state. The spread operator copies all existing key-value
+pairs from prev into a new object, then the computed property [itemId] overwrites
+just that one entry with Math.max(0, newQuantity). Math.max takes two arguments
+and returns the larger one. Since the second argument is newQuantity and the
+first is zero, the result can never go below zero — it is a mathematical floor.
+
+The Stepper component adds a second layer of protection. Its handleDecrement
+function checks: if (value > min) before calling the decrement callback at all.
+So the negative value is blocked at the UI level before it even reaches
+handleQuantityChange.
+
+The hasItems variable is derived using:
+Object.values(cart).some(qty => qty > 0).
+Object.values returns an array of all the numbers in the cart object. The some
+method returns true if at least one element satisfies the callback condition — in
+this case, greater than zero. If every quantity is zero, some returns false,
+hasItems is false, and the Create Order button receives disabled equals true."
+
+
+--------------------------------------------------------------------------------
+Modal State Machine — Types & Control Flow (10:00 – 11:30)
+--------------------------------------------------------------------------------
+
+"The confirmation modal uses a TypeScript union type declared as:
+type ModalState = 'idle' | 'processing' | 'success' | 'error'.
+A union type restricts the variable to only those four string values — TypeScript
+will throw a compile error if any other value is assigned. This makes the state
+transitions explicit and safe.
+
+The state variable is initialised to 'idle'. When the confirm button is pressed,
+handleConfirmPress runs. The first two lines are setState('processing') and
+setErrorMessage(''). Clearing the error message before the request ensures a
+stale error from a previous failed attempt does not remain visible during the new
+attempt.
+
+The function is declared async, which means it returns a Promise and the await
+keyword can be used inside it. await onConfirm() pauses execution at that line
+until the Promise returned by onConfirm either resolves or rejects. onConfirm is
+the actual API call, defined in the parent screen and passed in as a prop.
+
+If it resolves without throwing, execution continues to setState('success') and a
+setTimeout schedules handleClose after 2000 milliseconds — two seconds. If
+onConfirm throws an error, the catch block runs. The error message is extracted
+with: error instanceof Error ? error.message : 'Failed to place order'. This is
+a ternary operator — if error is an instance of the JavaScript Error class, use
+its message property; otherwise use the fallback string. Then setState is set to
+'error'.
+
+The rendering side uses these state values as conditions. The button container is
+wrapped in: {state !== 'success' && ...} — the logical AND short-circuit. In
+JavaScript, if the left side of && is false, the right side is never evaluated
+and nothing renders. So when state is 'success', the entire button section is
+removed from the DOM. The confirm button itself is disabled with:
+state === 'processing' — only disabled during processing, not during error, so
+the user can retry after a failure."
+
+
+--------------------------------------------------------------------------------
+Error Handling Pattern — API Errors & 401 Logic (11:30 – 12:30)
+--------------------------------------------------------------------------------
+
+"Across every screen that makes an API call, the same error handling pattern is
+used. The catch block receives the error object and checks three conditions in
+order.
+
+First: if (err.response). When Axios receives a response from the server — even
+an error response like 400 or 401 or 500 — it populates err.response. This means
+the server was reached and responded. Inside this block, the message is extracted
+from: err.response.data?.error || err.response.data?.message. The optional
+chaining operator — the question mark dot — safely accesses nested properties
+without throwing if the parent is undefined. The double pipe is a logical OR —
+it tries the first expression, and if that is falsy — null, undefined, or empty
+string — it falls back to the second.
+
+Before extracting the message, a special check runs:
+if (err.response?.status === 401). A 401 means the token has expired or is
+invalid. In that case, signOut is called from the auth context, which clears the
+token, sets isSignedIn to false, and the root layout's navigation guard redirects
+to login. This happens automatically on any screen — the user never gets stuck
+with a dead session.
+
+Second: else if (err.request). Axios populates err.request when a request was
+made but no response came back — a timeout or no internet connection. The message
+for this case is a network error string.
+
+Third: the final else covers anything unexpected — a programming error in the
+request setup itself."
+
+
+--------------------------------------------------------------------------------
+Fonts & useFonts Hook (12:30 – 13:15)
+--------------------------------------------------------------------------------
+
+"The Oswald font is loaded at the root of the application in _layout.tsx. The
+useFonts hook from @expo-google-fonts/oswald accepts an object mapping font
+family names to their imported font assets. It returns an array where the first
+element is a boolean — fontsLoaded — that starts as false and becomes true once
+all fonts have finished loading asynchronously.
+
+The root component checks: if (!fontsLoaded) before rendering anything. If false,
+it returns an ActivityIndicator. This gate means that by the time any screen
+renders, Oswald is guaranteed to be registered in the font registry. Any style
+with fontFamily: 'Oswald_700Bold' will resolve correctly.
+
+The font family names are centralised in a constants file as an OswaldFonts
+object with three keys — regular, semiBold, and bold — each holding the string
+name. Every screen that uses Oswald imports from that constants file rather than
+hardcoding the string, so if the font name ever changes it only needs to be
+updated in one place."
+
+
+================================================================================
+CLOSING (13:15 – 14:00)
+================================================================================
+
+"To summarise the architecture: authentication state lives in a context and
+drives navigation through the root layout's useEffect guard. API data flows from
+Axios service files into component state via useEffect hooks. The cart is a plain
+Record object manipulated with functional setState updates and protected by
+Math.max at the logic level and a conditional check at the UI level. The modal
+follows a four-state machine that keeps every possible outcome — idle, processing,
+success, error — as an explicit named state rather than a combination of
+booleans. Every async operation across the app follows the same
+loading-error-empty-data rendering pattern for consistency.
+
+The full source code and setup instructions are in the GitHub repository linked
+in the submission summary. Thank you."
+
+
+================================================================================
+TIMING SUMMARY
+================================================================================
+
+  Intro ...................................... 0:00 – 0:30
+  Login demo ................................. 0:30 – 1:15
+  Restaurant list & filters demo ............. 1:15 – 2:00
+  Menu & order demo .......................... 2:00 – 3:00
+  Confirmation modal demo .................... 3:00 – 3:45
+  Order history demo ......................... 3:45 – 4:30
+  Project structure .......................... 4:30 – 5:15
+  Auth context — variables & state ........... 5:15 – 6:30
+  Root layout — navigation guard ............. 6:30 – 7:30
+  Filtering — conditions & operators ......... 7:30 – 8:45
+  Cart state & Stepper logic ................. 8:45 – 10:00
+  Modal state machine ........................ 10:00 – 11:30
+  Error handling & 401 logic ................. 11:30 – 12:30
+  Fonts & useFonts hook ...................... 12:30 – 13:15
+  Closing .................................... 13:15 – 14:00
+
+  TOTAL: ~14 minutes
+
+================================================================================

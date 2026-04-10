@@ -2,23 +2,30 @@
   "info": {
     "name": "RocketFood API",
     "_postman_id": "rocketfood-api-collection",
-    "description": "RocketFood Delivery API — Module 13. Set baseUrl variable before running. Login request auto-saves the JWT token.",
+    "description": "RocketFood Delivery API — All endpoints. Set baseUrl variable before running. Login auto-saves the JWT token.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
-    { "key": "token",   "value": "", "type": "string" },
-    { "key": "customer_id", "value": "2",  "type": "string" },
-    { "key": "restaurant_id", "value": "1", "type": "string" },
-    { "key": "product_id", "value": "1",   "type": "string" },
-    { "key": "order_id", "value": "1",     "type": "string" },
-    { "key": "courier_id", "value": "1",   "type": "string" }
+    { "key": "baseUrl",           "value": "http://localhost:8080", "type": "string" },
+    { "key": "token",             "value": "",  "type": "string" },
+    { "key": "user_id",           "value": "1",  "type": "string" },
+    { "key": "customer_id",       "value": "2",  "type": "string" },
+    { "key": "courier_id",        "value": "1",  "type": "string" },
+    { "key": "employee_id",       "value": "1",  "type": "string" },
+    { "key": "restaurant_id",     "value": "1",  "type": "string" },
+    { "key": "product_id",        "value": "1",  "type": "string" },
+    { "key": "order_id",          "value": "1",  "type": "string" },
+    { "key": "address_id",        "value": "1",  "type": "string" },
+    { "key": "courier_status_id", "value": "1",  "type": "string" },
+    { "key": "order_status_id",   "value": "1",  "type": "string" },
+    { "key": "product_order_id",  "value": "1",  "type": "string" }
   ],
   "auth": {
     "type": "bearer",
     "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
   },
   "item": [
+
     {
       "name": "Auth",
       "item": [
@@ -34,7 +41,10 @@
                   "  pm.collectionVariables.set('token', json.accessToken);",
                   "}",
                   "if (json.customer_id) {",
-                  "  pm.collectionVariables.set('customer_id', json.customer_id);",
+                  "  pm.collectionVariables.set('customer_id', String(json.customer_id));",
+                  "}",
+                  "if (json.user_id) {",
+                  "  pm.collectionVariables.set('user_id', String(json.user_id));",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -54,6 +64,173 @@
         }
       ]
     },
+
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api","users"] }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/users/{{user_id}}", "host": ["{{baseUrl}}"], "path": ["api","users","{{user_id}}"] }
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Smith\",\n  \"email\": \"jane.smith@example.com\",\n  \"password\": \"securepassword\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api","users"] }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Updated\",\n  \"email\": \"jane.updated@example.com\",\n  \"password\": \"newpassword\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{user_id}}", "host": ["{{baseUrl}}"], "path": ["api","users","{{user_id}}"] }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/users/{{user_id}}", "host": ["{{baseUrl}}"], "path": ["api","users","{{user_id}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Accounts",
+      "item": [
+        {
+          "name": "Get Account by User ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/account/{{user_id}}", "host": ["{{baseUrl}}"], "path": ["api","account","{{user_id}}"] }
+          }
+        },
+        {
+          "name": "Update Account (Customer)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"new.email@example.com\",\n  \"phone\": \"+1-555-9999\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/account/{{user_id}}?type=customer",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","account","{{user_id}}"],
+              "query": [{ "key": "type", "value": "customer" }]
+            }
+          }
+        },
+        {
+          "name": "Update Account (Courier)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"new.courier@example.com\",\n  \"phone\": \"+1-555-8888\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/account/{{user_id}}?type=courier",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","account","{{user_id}}"],
+              "query": [{ "key": "type", "value": "courier" }]
+            }
+          }
+        },
+        {
+          "name": "Update Account (Employee)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"new.employee@example.com\",\n  \"phone\": \"+1-555-7777\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/account/{{user_id}}?type=employee",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","account","{{user_id}}"],
+              "query": [{ "key": "type", "value": "employee" }]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Addresses",
+      "item": [
+        {
+          "name": "Get All Addresses",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/addresses", "host": ["{{baseUrl}}"], "path": ["api","addresses"] }
+          }
+        },
+        {
+          "name": "Get Address by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/addresses/{{address_id}}", "host": ["{{baseUrl}}"], "path": ["api","addresses","{{address_id}}"] }
+          }
+        },
+        {
+          "name": "Create Address",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"street_address\": \"789 Pine Blvd\",\n  \"city\": \"Toronto\",\n  \"postal_code\": \"M5V2T6\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/addresses", "host": ["{{baseUrl}}"], "path": ["api","addresses"] }
+          }
+        },
+        {
+          "name": "Update Address",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"street_address\": \"999 Updated Ave\",\n  \"city\": \"Vancouver\",\n  \"postal_code\": \"V6B1A1\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/addresses/{{address_id}}", "host": ["{{baseUrl}}"], "path": ["api","addresses","{{address_id}}"] }
+          }
+        },
+        {
+          "name": "Delete Address",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/addresses/{{address_id}}", "host": ["{{baseUrl}}"], "path": ["api","addresses","{{address_id}}"] }
+          }
+        }
+      ]
+    },
+
     {
       "name": "Restaurants",
       "item": [
@@ -107,7 +284,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Test Restaurant\",\n  \"phone\": \"5141234567\",\n  \"email\": \"test@restaurant.com\",\n  \"price_range\": 2,\n  \"address_id\": 1\n}"
+              "raw": "{\n  \"user_id\": 2,\n  \"name\": \"Villa Wellington\",\n  \"phone\": \"15141234567\",\n  \"email\": \"villa@wellington.com\",\n  \"price_range\": 2,\n  \"address\": {\n    \"street_address\": \"123 Wellington St.\",\n    \"city\": \"Montreal\",\n    \"postal_code\": \"H3G264\"\n  }\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/v1/restaurants", "host": ["{{baseUrl}}"], "path": ["api","v1","restaurants"] }
           }
@@ -119,7 +296,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Restaurant\",\n  \"phone\": \"5141234567\",\n  \"email\": \"updated@restaurant.com\",\n  \"price_range\": 3,\n  \"address_id\": 1\n}"
+              "raw": "{\n  \"name\": \"B12 Nation\",\n  \"price_range\": 3,\n  \"phone\": \"2223334444\"\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/v1/restaurants/{{restaurant_id}}", "host": ["{{baseUrl}}"], "path": ["api","v1","restaurants","{{restaurant_id}}"] }
           }
@@ -133,6 +310,7 @@
         }
       ]
     },
+
     {
       "name": "Products",
       "item": [
@@ -141,6 +319,18 @@
           "request": {
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/api/v1/products", "host": ["{{baseUrl}}"], "path": ["api","v1","products"] }
+          }
+        },
+        {
+          "name": "Get Products by Restaurant",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products?restaurant={{restaurant_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","v1","products"],
+              "query": [{ "key": "restaurant", "value": "{{restaurant_id}}" }]
+            }
           }
         },
         {
@@ -157,7 +347,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Test Burger\",\n  \"cost\": 1299,\n  \"restaurant_id\": {{restaurant_id}}\n}"
+              "raw": "{\n  \"restaurant_id\": {{restaurant_id}},\n  \"name\": \"New Burger\",\n  \"description\": \"A delicious new burger\",\n  \"cost\": 899\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/v1/products", "host": ["{{baseUrl}}"], "path": ["api","v1","products"] }
           }
@@ -169,7 +359,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Burger\",\n  \"cost\": 1499,\n  \"restaurant_id\": {{restaurant_id}}\n}"
+              "raw": "{\n  \"name\": \"Updated Burger\",\n  \"description\": \"An updated description\",\n  \"cost\": 999\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/v1/products/{{product_id}}", "host": ["{{baseUrl}}"], "path": ["api","v1","products","{{product_id}}"] }
           }
@@ -183,6 +373,211 @@
         }
       ]
     },
+
+    {
+      "name": "Customers",
+      "item": [
+        {
+          "name": "Get All Customers",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/customers", "host": ["{{baseUrl}}"], "path": ["api","customers"] }
+          }
+        },
+        {
+          "name": "Get Customer by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/customers/{{customer_id}}", "host": ["{{baseUrl}}"], "path": ["api","customers","{{customer_id}}"] }
+          }
+        },
+        {
+          "name": "Create Customer",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 5,\n  \"address_id\": 3,\n  \"phone\": \"+1-555-1234\",\n  \"email\": \"customer@example.com\",\n  \"active\": true\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/customers", "host": ["{{baseUrl}}"], "path": ["api","customers"] }
+          }
+        },
+        {
+          "name": "Update Customer",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 5,\n  \"address_id\": 3,\n  \"phone\": \"+1-555-9999\",\n  \"email\": \"updated@example.com\",\n  \"active\": true\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/customers/{{customer_id}}", "host": ["{{baseUrl}}"], "path": ["api","customers","{{customer_id}}"] }
+          }
+        },
+        {
+          "name": "Delete Customer",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/customers/{{customer_id}}", "host": ["{{baseUrl}}"], "path": ["api","customers","{{customer_id}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Couriers",
+      "item": [
+        {
+          "name": "Get All Couriers",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/couriers", "host": ["{{baseUrl}}"], "path": ["api","couriers"] }
+          }
+        },
+        {
+          "name": "Get Courier by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/couriers/{{courier_id}}", "host": ["{{baseUrl}}"], "path": ["api","couriers","{{courier_id}}"] }
+          }
+        },
+        {
+          "name": "Create Courier",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 10,\n  \"address_id\": 7,\n  \"courier_status_id\": 1,\n  \"phone\": \"+1-555-4567\",\n  \"email\": \"courier@example.com\",\n  \"active\": true\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/couriers", "host": ["{{baseUrl}}"], "path": ["api","couriers"] }
+          }
+        },
+        {
+          "name": "Update Courier",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 10,\n  \"address_id\": 7,\n  \"courier_status_id\": 2,\n  \"phone\": \"+1-555-0000\",\n  \"email\": \"updated.courier@example.com\",\n  \"active\": true\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/couriers/{{courier_id}}", "host": ["{{baseUrl}}"], "path": ["api","couriers","{{courier_id}}"] }
+          }
+        },
+        {
+          "name": "Delete Courier",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/couriers/{{courier_id}}", "host": ["{{baseUrl}}"], "path": ["api","couriers","{{courier_id}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Courier Statuses",
+      "item": [
+        {
+          "name": "Get All Courier Statuses",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/courier-statuses", "host": ["{{baseUrl}}"], "path": ["api","courier-statuses"] }
+          }
+        },
+        {
+          "name": "Get Courier Status by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/courier-statuses/{{courier_status_id}}", "host": ["{{baseUrl}}"], "path": ["api","courier-statuses","{{courier_status_id}}"] }
+          }
+        },
+        {
+          "name": "Create Courier Status",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"on_break\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/courier-statuses", "host": ["{{baseUrl}}"], "path": ["api","courier-statuses"] }
+          }
+        },
+        {
+          "name": "Update Courier Status",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"updated_status\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/courier-statuses/{{courier_status_id}}", "host": ["{{baseUrl}}"], "path": ["api","courier-statuses","{{courier_status_id}}"] }
+          }
+        },
+        {
+          "name": "Delete Courier Status",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/courier-statuses/{{courier_status_id}}", "host": ["{{baseUrl}}"], "path": ["api","courier-statuses","{{courier_status_id}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Employees",
+      "item": [
+        {
+          "name": "Get All Employees",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/employees", "host": ["{{baseUrl}}"], "path": ["api","employees"] }
+          }
+        },
+        {
+          "name": "Get Employee by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/employees/{{employee_id}}", "host": ["{{baseUrl}}"], "path": ["api","employees","{{employee_id}}"] }
+          }
+        },
+        {
+          "name": "Create Employee",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 2,\n  \"address_id\": 4,\n  \"phone\": \"+1-555-7890\",\n  \"email\": \"employee@example.com\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/employees", "host": ["{{baseUrl}}"], "path": ["api","employees"] }
+          }
+        },
+        {
+          "name": "Update Employee",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 2,\n  \"address_id\": 4,\n  \"phone\": \"+1-555-0000\",\n  \"email\": \"updated.employee@example.com\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/employees/{{employee_id}}", "host": ["{{baseUrl}}"], "path": ["api","employees","{{employee_id}}"] }
+          }
+        },
+        {
+          "name": "Delete Employee",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/employees/{{employee_id}}", "host": ["{{baseUrl}}"], "path": ["api","employees","{{employee_id}}"] }
+          }
+        }
+      ]
+    },
+
     {
       "name": "Orders",
       "item": [
@@ -247,7 +642,9 @@
                 "exec": [
                   "var json = pm.response.json();",
                   "if (json.data && json.data.id) {",
-                  "  pm.collectionVariables.set('order_id', json.data.id);",
+                  "  pm.collectionVariables.set('order_id', String(json.data.id));",
+                  "} else if (json.id) {",
+                  "  pm.collectionVariables.set('order_id', String(json.id));",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -271,7 +668,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"restaurant_id\": {{restaurant_id}},\n  \"customer_id\": {{customer_id}},\n  \"order_status_id\": 2,\n  \"restaurant_rating\": null\n}"
+              "raw": "{\n  \"customer_id\": {{customer_id}},\n  \"restaurant_id\": {{restaurant_id}},\n  \"courier_id\": {{courier_id}}\n}"
             },
             "url": { "raw": "{{baseUrl}}/api/v1/orders/{{order_id}}", "host": ["{{baseUrl}}"], "path": ["api","v1","orders","{{order_id}}"] }
           }
@@ -308,6 +705,121 @@
           }
         }
       ]
+    },
+
+    {
+      "name": "Order Statuses",
+      "item": [
+        {
+          "name": "Change Order Status",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in progress\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/order/{{order_id}}/status", "host": ["{{baseUrl}}"], "path": ["api","order","{{order_id}}","status"] }
+          }
+        },
+        {
+          "name": "Get All Order Statuses",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/order-statuses", "host": ["{{baseUrl}}"], "path": ["api","order-statuses"] }
+          }
+        },
+        {
+          "name": "Get Order Status by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/order-statuses/{{order_status_id}}", "host": ["{{baseUrl}}"], "path": ["api","order-statuses","{{order_status_id}}"] }
+          }
+        },
+        {
+          "name": "Create Order Status",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"cancelled\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/order-statuses", "host": ["{{baseUrl}}"], "path": ["api","order-statuses"] }
+          }
+        },
+        {
+          "name": "Update Order Status",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"updated_status\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/order-statuses/{{order_status_id}}", "host": ["{{baseUrl}}"], "path": ["api","order-statuses","{{order_status_id}}"] }
+          }
+        },
+        {
+          "name": "Delete Order Status",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/order-statuses/{{order_status_id}}", "host": ["{{baseUrl}}"], "path": ["api","order-statuses","{{order_status_id}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Product Orders",
+      "item": [
+        {
+          "name": "Get All Product Orders",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/product-orders", "host": ["{{baseUrl}}"], "path": ["api","product-orders"] }
+          }
+        },
+        {
+          "name": "Get Product Order by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/product-orders/{{product_order_id}}", "host": ["{{baseUrl}}"], "path": ["api","product-orders","{{product_order_id}}"] }
+          }
+        },
+        {
+          "name": "Create Product Order",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": {{product_id}},\n  \"order_id\": {{order_id}},\n  \"product_quantity\": 2,\n  \"product_unit_cost\": 1975\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/product-orders", "host": ["{{baseUrl}}"], "path": ["api","product-orders"] }
+          }
+        },
+        {
+          "name": "Update Product Order",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": {{product_id}},\n  \"order_id\": {{order_id}},\n  \"product_quantity\": 5,\n  \"product_unit_cost\": 1975\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/product-orders/{{product_order_id}}", "host": ["{{baseUrl}}"], "path": ["api","product-orders","{{product_order_id}}"] }
+          }
+        },
+        {
+          "name": "Delete Product Order",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/product-orders/{{product_order_id}}", "host": ["{{baseUrl}}"], "path": ["api","product-orders","{{product_order_id}}"] }
+          }
+        }
+      ]
     }
+
   ]
 }

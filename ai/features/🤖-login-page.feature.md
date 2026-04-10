@@ -93,16 +93,16 @@ The login page is the **authentication gateway** that ensures only authorized us
    - Clear/dismiss on retry
 
 6. **API Integration**
-   - POST request to `/api/v1/login` or `/auth/login`
+   - POST request to `/api/v1/auth/login`
    - Body: `{ email, password }`
-   - Response: `{ token: "JWT_TOKEN", user: { id, email, ... } }`
+   - Response: `{ accessToken: "JWT_TOKEN", customer_id: 2, user_id: 1 }`
    - Error response: `{ error: "Invalid credentials" }` or similar
 
 7. **Token Storage**
-   - Store JWT token in AsyncStorage
-   - Key: `authToken`
+   - Store JWT token in AsyncStorage with key: `authToken`
+   - Store customer ID in AsyncStorage with key: `customerId`
    - Persist for subsequent app launches
-   - Retrieve on app startup for auth check
+   - Retrieve on app startup for auth check via `AuthContext`
 
 8. **Navigation & Redirect**
    - On success: navigate to `/(tabs)/index` (Restaurants tab)
@@ -208,33 +208,35 @@ export default function LoginScreen() {
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| `POST` | `/api/v1/auth/login` or `/api/v1/users/login` | Authenticate user and return JWT token |
+| `POST` | `/api/v1/auth/login` | Authenticate user and return JWT token |
 
 **Request Body:**
 ```json
 {
-  "email": "user@example.com",
-  "password": "password123"
+  "email": "customer@gmail.com",
+  "password": "password"
 }
 ```
 
 **Success Response (HTTP 200):**
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": "user-123",
-    "email": "user@example.com",
-    "name": "John Doe"
-  }
+  "accessToken": "eyJhbGciOiJIUzUxMiJ9...",
+  "customer_id": 2,
+  "user_id": 1
 }
 ```
+
+**Notes:**
+- `accessToken` is the JWT bearer token — store under AsyncStorage key `authToken`
+- `customer_id` is the customer entity ID — store under AsyncStorage key `customerId`
+- If `customer_id` is null, this account is not a customer and login should be rejected
+- Response may be wrapped: check `response.data.data` first, then fall back to `response.data`
 
 **Error Response (HTTP 401/400):**
 ```json
 {
-  "error": "Invalid email or password",
-  "message": "Authentication failed"
+  "error": "Invalid email or password"
 }
 ```
 
@@ -255,9 +257,11 @@ export default function LoginScreen() {
 
 | Key | Type | Action | Value |
 |-----|------|--------|-------|
-| `authToken` | string | **Write** on success | JWT token from API |
-| `authToken` | string | **Read** on app startup | Check if user logged in |
-| `authToken` | string | **Delete** on logout | Clear on user logout |
+| `authToken` | string | **Write** on success | `accessToken` from API response |
+| `customerId` | string | **Write** on success | `customer_id` from API response |
+| `authToken` | string | **Read** on app startup | Checked by `AuthContext` bootstrap |
+| `authToken` | string | **Delete** on logout | Cleared by `signOut()` in AuthContext |
+| `customerId` | string | **Delete** on logout | Cleared by `signOut()` in AuthContext |
 
 ### API Request/Response
 

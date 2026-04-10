@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { OswaldFonts } from '@/constants/theme';
 import {
   View,
   Text,
@@ -38,7 +39,7 @@ export default function OrderHistoryScreen() {
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
       setOrders(orderList);
-    } catch (err) {
+    } catch {
       setError('Failed to load order history. Please try again.');
     } finally {
       setLoading(false);
@@ -72,7 +73,7 @@ export default function OrderHistoryScreen() {
     } finally {
       setRefreshing(false);
     }
-  }, []);
+  }, [customerId]);
 
   const handleViewOrder = (order: Order) => {
     setSelectedOrder(order);
@@ -202,7 +203,7 @@ const styles = StyleSheet.create({
   },
   pageTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: OswaldFonts.bold,
     color: '#222126',
     paddingHorizontal: 16,
     paddingTop: 16,
@@ -215,7 +216,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   columnHeader: {
-    fontWeight: '700',
+    fontFamily: OswaldFonts.bold,
     fontSize: 13,
     color: '#FFFFFF',
   },

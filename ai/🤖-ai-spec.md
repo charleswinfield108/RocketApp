@@ -253,7 +253,7 @@ Root Layout
 **Required Stack:**
 - Runtime: Node.js 18+ LTS
 - Language: TypeScript 5.0+
-- Framework: React Native (via Expo SDK ~55)
+- Framework: React Native (via Expo SDK 54)
 - Build Tool: Expo CLI
 - Package Manager: npm 9+
 
@@ -295,10 +295,10 @@ Root Layout
 ### Backend (Java Spring Boot - From Module 12)
 
 **Stack:**
-- Runtime: Java 17+ LTS
+- Runtime: Java 21 LTS
 - Framework: Spring Boot 3.0+
 - Build Tool: Maven
-- Database: PostgreSQL 14+
+- Database: MySQL 8
 
 **No Modifications Required:**
 - API is complete from Module 12
@@ -333,69 +333,77 @@ Root Layout
 
 ## � Feature Requirements
 
-### Feature 1: Login Screen
-**File:** `ai/features/login.feature.md`
-- Email/password input fields
-- Sign in button (authenticates via API)
-- JWT token received and stored in AsyncStorage
+### Feature 1: Navigation Structure
+**File:** `ai/features/🤖-navigation-structure.feature.md`
+- Three-level nested navigation (Root Stack → Tabs → Restaurant Stack)
+- Auth guard: redirects to login if no token
+- Tab navigator: Restaurants + Order History tabs
+- Dynamic restaurant route: `(restaurant)/[id].tsx`
+
+### Feature 2: Login Screen
+**File:** `ai/features/🤖-login-page.feature.md`
+- Email/password input fields with validation
+- POST to `/api/v1/auth/login`
+- Stores `accessToken` → AsyncStorage `authToken`, `customer_id` → AsyncStorage `customerId`
 - Error feedback for invalid credentials
-- Navigate to Restaurants tab on successful login
-- Must match wireframe design exactly
+- Navigates to `/(tabs)/(restaurant)/index` on success
 
-### Feature 2: Restaurant Browsing & List
-**File:** `ai/features/restaurant-browsing.feature.md`
+### Feature 3: Header & Footer
+**File:** `ai/features/🤖-header-footer.feature.md`
+- Persistent header on all authenticated screens (hidden on login)
+- Logo on left, logout button on right
+- Logout: clears `authToken` + `customerId` from AsyncStorage, navigates to login
+- Tab footer: Restaurants tab + Order History tab
+
+### Feature 4: Restaurant List Page
+**File:** `ai/features/🤖-restaurant-list-page.feature.md`
 - Grid layout displaying all available restaurants
-- Navigation always visible (header + footer)
 - Each card shows: restaurant name, rating, price range, image
-- Tappable cards navigate to restaurant menu
-- Must match wireframe design exactly
+- Filter by: Rating and Price Range (client-side filtering)
+- Tappable cards navigate to restaurant menu screen
 
-### Feature 3: Restaurant Search & Filtering
-**File:** `ai/features/restaurant-search.feature.md`
-- Filter toolbar on restaurant list
-- Filter by: Rating (range), Price Range (low/medium/high)
-- Real-time filtering (no separate "apply" button)
-- Clear filters option
-- Results update dynamically
-
-### Feature 4: Restaurant Menu View
-**File:** `ai/features/menu-view.feature.md`
-- Display restaurant name, image (RestaurantMenu.jpg), and menu items
+### Feature 5: Restaurant Menu Page
+**File:** `ai/features/🤖-restaurant-menu-page.feature.md`
+- Display restaurant name, static image (RestaurantMenu.jpg), and menu items
 - Each item shows: name, description, price
-- Quantity stepper (buttons only, no text input)
-- Stepper minimum: 1, no negative values
-- "Add to Order" button to include item
-- Must match wireframe design exactly
+- Quantity stepper (buttons only — NO text input)
+- Stepper minimum: 0, no negative values
+- "Create Order" button enabled only when at least one item selected
 
-### Feature 5: Order Creation
-**File:** `ai/features/order-creation.feature.md`
-- Summary of selected items with quantities and prices
-- Total order price calculation
-- "Place Order" confirmation button
-- Modal confirmation with order details
-- API call to create order with JWT token
+### Feature 6: Menu Modal Confirmation
+**File:** `ai/features/🤖-menu-modal-confirmation.feature.md`
+- Order summary with itemized pricing
+- Processing → Success → Error states
+- POST to `/api/v1/orders`
+- Success auto-navigates to Order History after 2.5 seconds
+- Error allows immediate retry
 
-### Feature 6: Order History
-**File:** `ai/features/order-history.feature.md`
-- Display past orders in a list
-- Each order card shows: order ID, date, total, status
-- Tappable to expand order details (modal)
-- Details include: items, quantities, total, timestamp
+### Feature 7: Order History Page
+**File:** `ai/features/🤖-order-history-page.feature.md`
+- Table layout: Order ID/date, Status badge, View button
+- Fetches with `useFocusEffect` to refresh on every tab visit
+- Color-coded status badges
+- Empty and error states handled
 
-### Feature 7: User Profile (Basic)
-**File:** `ai/features/profile.feature.md`
-- Display logged-in user info
-- Logout button
-- Clears token from AsyncStorage
-- Navigates back to login screen
+### Feature 8: Order History Modal
+**File:** `ai/features/🤖-order-history-modal.feature.md`
+- Full order detail: items, prices, courier info, delivery address
+- Dynamic route: `(tabs)/history/[id].tsx`
+- All prices formatted as $XX.XX
+- Graceful nulls for unassigned courier
 
-### Feature 8: Error Handling & UX
-**File:** `ai/features/error-handling.feature.md`
-- Network error alerts with retry option
-- API error messages displayed to user
-- Loading states on all async operations
+### Feature 9: User Profile
+**File:** `ai/features/🤖-profile.feature.md`
+- Display logged-in user account info
+- Logout button: clears token and navigates to login
+- (Currently hidden tab — accessible via `href: null` in tab layout)
+
+### Feature 10: Error Handling & UX
+**File:** `ai/features/🤖-error-handling.feature.md`
+- Network error messages with retry option on all API screens
+- Loading states (ActivityIndicator) during all async operations
 - Empty state messages (no restaurants, no orders)
-- Graceful token expiry handling
+- Graceful 401 handling: clear token, redirect to login
 
 ---
 
@@ -409,7 +417,7 @@ Root Layout
 ### Documentation
 - [ ] **`README.md`** - Project overview, setup instructions, Ngrok tunnel guide
 - [ ] **`ai/ai-spec.md`** - This global specification (complete)
-- [ ] **`ai/features/*.feature.md`** - Eight feature specifications (one per feature)
+- [ ] **`ai/features/🤖-*.feature.md`** - Ten feature specifications (one per feature)
 - [ ] **`CONCEPTS.md`** - 3 challenging concepts with explanation
 - [ ] **`.env.example`** - Environment variables template for API URL, Ngrok tunnel
 - [ ] **Postman Collection** - `PostmanCollection.json` (all module endpoints exported)

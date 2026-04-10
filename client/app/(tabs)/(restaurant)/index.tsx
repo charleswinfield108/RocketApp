@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { OswaldFonts } from '@/constants/theme';
 import {
   View,
   Text,
@@ -52,8 +53,7 @@ export default function RestaurantListScreen() {
       const data = response.data.data || [];
       setRestaurants(data);
       setFilteredRestaurants(data);
-    } catch (err) {
-      console.error('Error loading restaurants:', err);
+    } catch {
       setError('Failed to load restaurants. Please try again.');
     } finally {
       setLoading(false);
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: OswaldFonts.bold,
     color: '#222126',
     paddingHorizontal: 16,
     paddingTop: 16,

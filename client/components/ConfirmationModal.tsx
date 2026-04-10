@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { OswaldFonts } from '@/constants/theme';
 import {
   View,
   Text,
@@ -214,7 +215,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: OswaldFonts.bold,
     color: '#FFFFFF',
   },
   closeButton: {

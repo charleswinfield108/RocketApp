@@ -131,7 +131,7 @@ export default function RestaurantsScreen() {
           <FlatList
             data={restaurants}
             renderItem={renderRestaurantCard}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.id.toString()}
             numColumns={2}
             scrollEnabled={false}
             columnWrapperStyle={styles.gridRow}
