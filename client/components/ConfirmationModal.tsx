@@ -38,15 +38,26 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 }) => {
   const [state, setState] = useState<ModalState>('idle');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [snapshot, setSnapshot] = useState<{ items: OrderItem[]; total: number } | null>(null);
+
+  // Displayed values — use snapshot once processing starts so cart reset doesn't blank them
+  const displayItems = snapshot ? snapshot.items : items;
+  const displayTotal = snapshot ? snapshot.total : totalPrice;
 
   // Handle confirm button press
   const handleConfirmPress = async () => {
+    setSnapshot({ items, total: totalPrice });
     setState('processing');
     setErrorMessage('');
+    const start = Date.now();
     try {
       await onConfirm();
+      // Ensure processing state is visible for at least 1.5s
+      const elapsed = Date.now() - start;
+      if (elapsed < 1500) {
+        await new Promise(resolve => setTimeout(resolve, 1500 - elapsed));
+      }
       setState('success');
-      // Auto-close after 2 seconds on success
       setTimeout(() => {
         handleClose();
       }, 2000);
@@ -61,6 +72,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   const handleClose = () => {
     setState('idle');
     setErrorMessage('');
+    setSnapshot(null);
     onCancel();
   };
 
@@ -83,17 +95,45 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             </TouchableOpacity>
           </View>
 
+          {/* Content */}
+          <View style={styles.content}>
           {/* Restaurant Name */}
           <View style={styles.restaurantSection}>
             <Text style={styles.restaurantLabel}>Restaurant</Text>
             <Text style={styles.restaurantName}>{restaurantName}</Text>
           </View>
 
+          {/* Order Items — always visible */}
+          <ScrollView style={styles.itemsContainer}>
+            {displayItems.map((item) => (
+              <View key={item.id} style={styles.itemRow}>
+                <View style={styles.itemInfo}>
+                  <Text style={styles.itemName}>{item.name}</Text>
+                  <Text style={styles.itemQty}>Qty: {item.quantity}</Text>
+                </View>
+                <Text style={styles.itemPrice}>
+                  ${(item.price * item.quantity).toFixed(2)}
+                </Text>
+              </View>
+            ))}
+          </ScrollView>
+
+          {/* Divider */}
+          <View style={styles.divider} />
+
+          {/* Total */}
+          <View style={styles.totalSection}>
+            <Text style={styles.totalLabel}>Total</Text>
+            <Text style={styles.totalPrice}>${displayTotal.toFixed(2)}</Text>
+          </View>
+
           {/* Success State */}
           {state === 'success' && (
             <View style={styles.successContainer}>
-              <Text style={styles.successIcon}>✓</Text>
-              <Text style={styles.successMessage}>Order placed successfully!</Text>
+              <View style={styles.successCircle}>
+                <Text style={styles.successIcon}>✓</Text>
+              </View>
+              <Text style={styles.successMessage}>Thank you! Your order has been received.</Text>
             </View>
           )}
 
@@ -105,63 +145,26 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             </View>
           )}
 
-          {/* Order Items (hidden in success state) */}
-          {state !== 'success' && (
-            <>
-              <ScrollView style={styles.itemsContainer}>
-                {items.map((item) => (
-                  <View key={item.id} style={styles.itemRow}>
-                    <View style={styles.itemInfo}>
-                      <Text style={styles.itemName}>{item.name}</Text>
-                      <Text style={styles.itemQty}>Qty: {item.quantity}</Text>
-                    </View>
-                    <Text style={styles.itemPrice}>
-                      ${(item.price * item.quantity).toFixed(2)}
-                    </Text>
-                  </View>
-                ))}
-              </ScrollView>
-
-              {/* Divider */}
-              <View style={styles.divider} />
-
-              {/* Total */}
-              <View style={styles.totalSection}>
-                <Text style={styles.totalLabel}>Total</Text>
-                <Text style={styles.totalPrice}>${totalPrice.toFixed(2)}</Text>
-              </View>
-            </>
-          )}
-
           {/* Action Buttons */}
           {state !== 'success' && (
             <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.button,
-                  styles.cancelButton,
-                  state === 'processing' && styles.buttonDisabled,
-                ]}
-                onPress={handleClose}
-                disabled={state === 'processing'}
-                activeOpacity={0.8}
-              >
-                <Text
-                  style={[
-                    styles.buttonText,
-                    styles.cancelButtonText,
-                    state === 'processing' && styles.buttonTextDisabled,
-                  ]}
+              {state !== 'processing' && (
+                <TouchableOpacity
+                  style={[styles.button, styles.cancelButton]}
+                  onPress={handleClose}
+                  activeOpacity={0.8}
                 >
-                  Cancel
-                </Text>
-              </TouchableOpacity>
+                  <Text style={[styles.buttonText, styles.cancelButtonText]}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+              )}
 
               <TouchableOpacity
                 style={[
                   styles.button,
                   styles.confirmButton,
-                  state === 'processing' && styles.buttonDisabled,
+                  state === 'processing' && styles.buttonFullWidth,
                 ]}
                 onPress={handleConfirmPress}
                 disabled={state === 'processing'}
@@ -182,6 +185,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
               </TouchableOpacity>
             </View>
           )}
+          </View>{/* end content */}
         </View>
       </View>
     </Modal>
@@ -192,15 +196,16 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
   },
   modalContainer: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    maxHeight: '90%',
+    borderRadius: 8,
+    width: '100%',
+    maxHeight: '85%',
+    overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',
@@ -209,8 +214,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#222126',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    marginHorizontal: -16,
-    marginTop: -16,
     marginBottom: 16,
   },
   title: {
@@ -224,6 +227,10 @@ const styles = StyleSheet.create({
   },
   closeButtonDisabled: {
     color: '#999999',
+  },
+  content: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   restaurantSection: {
     marginBottom: 12,
@@ -242,17 +249,25 @@ const styles = StyleSheet.create({
   successContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
-    marginBottom: 16,
+    paddingVertical: 24,
+    marginBottom: 8,
   },
-  successIcon: {
-    fontSize: 60,
-    color: '#609475',
-    fontWeight: '700',
+  successCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#609475',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 12,
   },
+  successIcon: {
+    fontSize: 32,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
   successMessage: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#609475',
     textAlign: 'center',
@@ -308,7 +323,7 @@ const styles = StyleSheet.create({
   itemPrice: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#DA583B',
+    color: '#222126',
     marginLeft: 8,
     minWidth: 60,
     textAlign: 'right',
@@ -332,7 +347,7 @@ const styles = StyleSheet.create({
   totalPrice: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#DA583B',
+    color: '#222126',
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -356,6 +371,9 @@ const styles = StyleSheet.create({
   confirmButton: {
     backgroundColor: '#DA583B',
     borderColor: '#DA583B',
+  },
+  buttonFullWidth: {
+    flex: 1,
   },
   buttonText: {
     fontSize: 14,

@@ -20,7 +20,7 @@ export default function RestaurantLayout() {
       <Stack.Screen
         name="[id]"
         options={{
-          title: 'Restaurant Menu',
+          headerShown: false,
         }}
       />
 
