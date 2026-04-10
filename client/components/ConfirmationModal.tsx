@@ -127,28 +127,10 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             <Text style={styles.totalPrice}>${displayTotal.toFixed(2)}</Text>
           </View>
 
-          {/* Success State */}
-          {state === 'success' && (
-            <View style={styles.successContainer}>
-              <View style={styles.successCircle}>
-                <Text style={styles.successIcon}>✓</Text>
-              </View>
-              <Text style={styles.successMessage}>Thank you! Your order has been received.</Text>
-            </View>
-          )}
-
-          {/* Error State */}
-          {state === 'error' && (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorIcon}>✕</Text>
-              <Text style={styles.errorMessage}>{errorMessage}</Text>
-            </View>
-          )}
-
           {/* Action Buttons */}
           {state !== 'success' && (
             <View style={styles.buttonContainer}>
-              {state !== 'processing' && (
+              {state === 'idle' && (
                 <TouchableOpacity
                   style={[styles.button, styles.cancelButton]}
                   onPress={handleClose}
@@ -164,7 +146,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                 style={[
                   styles.button,
                   styles.confirmButton,
-                  state === 'processing' && styles.buttonFullWidth,
+                  (state === 'processing' || state === 'error') && styles.buttonFullWidth,
                 ]}
                 onPress={handleConfirmPress}
                 disabled={state === 'processing'}
@@ -183,6 +165,28 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                   </Text>
                 )}
               </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Success State */}
+          {state === 'success' && (
+            <View style={styles.successContainer}>
+              <View style={styles.successCircle}>
+                <Text style={styles.successIcon}>✓</Text>
+              </View>
+              <Text style={styles.successMessage}>Thank you! Your order has been received.</Text>
+            </View>
+          )}
+
+          {/* Error State */}
+          {state === 'error' && (
+            <View style={styles.errorContainer}>
+              <View style={styles.errorCircle}>
+                <Text style={styles.errorIcon}>✕</Text>
+              </View>
+              <Text style={styles.errorMessage}>
+                Your order was not processed successfully. Please try again.
+              </Text>
             </View>
           )}
           </View>{/* end content */}
@@ -275,21 +279,25 @@ const styles = StyleSheet.create({
   errorContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
-    marginBottom: 16,
-    backgroundColor: '#FEE8E8',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#851919',
+    paddingVertical: 24,
+    marginBottom: 8,
   },
-  errorIcon: {
-    fontSize: 50,
-    color: '#851919',
-    fontWeight: '700',
+  errorCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#851919',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 12,
   },
+  errorIcon: {
+    fontSize: 32,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
   errorMessage: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     color: '#851919',
     textAlign: 'center',
