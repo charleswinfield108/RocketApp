@@ -6,11 +6,14 @@
     "**/android/**",
     "**/ios/**"
   ],
+  "java.import.gradle.enabled": false,
+  "java.import.maven.enabled": false,
   "java.configuration.updateBuildConfiguration": "disabled",
   "java.autobuild.enabled": false,
   "files.watcherExclude": {
     "**/node_modules/**": true,
-    "**/.expo/**": true
+    "**/.expo/**": true,
+    "**/android/**": true
   },
   "files.exclude": {
     "**/node_modules": true
