@@ -123,3 +123,152 @@ The integration is guarded — if the Twilio credentials are blank in `applicati
 - **Never commit your Auth Token** to version control. Use `.gitignore` or environment variables.
 - The `.env.example` file in this project documents required variables without exposing real values.
 - On a Twilio trial account, SMS can only be sent to verified phone numbers. Upgrade to a paid account to send to any number.
+
+---
+
+## Notify.EU Email Integration in a Java Spring Boot Backend
+
+### Overview
+
+Notify.EU is a multi-channel notification platform that provides a REST API for sending transactional emails via SMTP channels. In RocketFood, Notify.EU is used to send an order confirmation email to the customer when an order is placed.
+
+**Proof of account:** See [screenshots/notify-eu-account.png](screenshots/notify-eu-account.png)
+
+---
+
+### Step 1 — Create a Notify.EU Account
+
+1. Go to [https://www.notify.eu](https://www.notify.eu) and register for an account.
+2. Verify your email address and log in to the dashboard.
+3. Once logged in, navigate to **Settings → API Credentials** to find your Client ID and Secret Key.
+
+---
+
+### Step 2 — Locate Your Credentials
+
+From the Notify.EU dashboard:
+
+- **Client ID** — Sent in the `X-ClientId` header of every API request.
+- **Secret Key** — Sent in the `X-SecretKey` header. Treat this like a password — never commit it to version control.
+
+---
+
+### Step 3 — Configure an SMTP Channel
+
+Notify.EU sends emails through a configured SMTP channel (e.g., Gmail, Outlook):
+
+1. In the dashboard, go to **Channels → Add Channel → SMTP**.
+2. For Gmail, use:
+   - **Server:** `smtp.gmail.com`
+   - **Port:** `587`
+   - **User:** your Gmail address
+   - **Password:** a Gmail App Password (not your regular password — see below)
+3. To generate a Gmail App Password:
+   - Go to your Google Account → Security → 2-Step Verification (must be enabled)
+   - Search for "App passwords" → create one for "Mail" → copy the 16-character password
+   - Use this as the SMTP password in Notify.EU
+
+---
+
+### Step 4 — Create a Notification Template
+
+1. In the Notify.EU dashboard, go to **Templates → Create Template**.
+2. Design your email template using dynamic parameters (e.g., `{{firstName}}`, `{{order_id}}`).
+3. Note the **Notification Type Name** — this is the `notificationType` value used in API requests.
+
+---
+
+### Step 5 — Configure Credentials in `application.properties`
+
+```properties
+# Notify.EU Email
+notify.api-url=https://api.notify.eu/notification/send
+notify.client-id=your-client-id
+notify.secret-key=your-secret-key
+notify.template-id=your-notification-type-name
+notify.language=en
+```
+
+Use environment variables in production:
+
+```properties
+notify.client-id=${NOTIFY_CLIENT_ID}
+notify.secret-key=${NOTIFY_SECRET_KEY}
+notify.template-id=${NOTIFY_TEMPLATE_ID}
+```
+
+---
+
+### Step 6 — Send Email via the Notify.EU REST API in Java
+
+Inject credentials with `@Value` and use `RestTemplate` to POST to the API:
+
+```java
+@Service
+public class NotificationService {
+
+    @Value("${notify.api-url}")
+    private String notifyApiUrl;
+
+    @Value("${notify.client-id}")
+    private String clientId;
+
+    @Value("${notify.secret-key}")
+    private String secretKey;
+
+    @Value("${notify.template-id}")
+    private String templateId;
+
+    private final RestTemplate restTemplate = new RestTemplate();
+
+    public void sendEmail(String toEmail, String recipientName, String orderId) {
+        String body = "{"
+            + "\"message\": {"
+            + "  \"notificationType\": \"" + templateId + "\","
+            + "  \"language\": \"en\","
+            + "  \"params\": {"
+            + "    \"firstName\": \"" + recipientName + "\","
+            + "    \"order_id\": \"" + orderId + "\""
+            + "  },"
+            + "  \"transport\": [{"
+            + "    \"type\": \"SMTP\","
+            + "    \"recipients\": {"
+            + "      \"to\": [{"
+            + "        \"name\": \"" + recipientName + "\","
+            + "        \"recipient\": \"" + toEmail + "\""
+            + "      }]"
+            + "    }"
+            + "  }]"
+            + "}"
+            + "}";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("X-ClientId", clientId);
+        headers.set("X-SecretKey", secretKey);
+
+        restTemplate.postForEntity(notifyApiUrl, new HttpEntity<>(body, headers), String.class);
+    }
+}
+```
+
+---
+
+### How It Works in RocketFood
+
+`NotificationService.sendEmail()` is called when a new order is created with `send_email: true` in the request body. The service:
+
+1. Resolves the customer's email from the database (falls back to the linked user's email)
+2. Builds a JSON payload with the order details and customer name
+3. Sets `X-ClientId` and `X-SecretKey` headers and POSTs to the Notify.EU API
+4. The API routes the message through the configured SMTP channel to the customer's inbox
+
+The integration is guarded — if `notify.client-id` or `notify.secret-key` are blank in `application.properties`, the email is skipped with a warning log rather than throwing an exception.
+
+---
+
+### Security Notes
+
+- **Never commit your Secret Key** to version control.
+- Store credentials as environment variables in staging and production environments.
+- The `application.properties` file is listed in `.gitignore` to prevent accidental credential exposure.
