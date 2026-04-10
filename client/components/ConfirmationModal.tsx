@@ -341,12 +341,12 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '900',
     color: '#222126',
   },
   totalPrice: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '400',
     color: '#222126',
   },
   buttonContainer: {

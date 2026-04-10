@@ -171,12 +171,12 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '900',
     color: '#222126',
   },
   totalAmount: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '400',
     color: '#222126',
   },
 });
