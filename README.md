@@ -1,29 +1,47 @@
-# RocketFood Delivery
+# 🚀 RocketFood Delivery
 
 A full-stack food delivery mobile application built with React Native (Expo) and a Java Spring Boot REST API. Customers can browse restaurants, place orders, and view their order history.
 
 ---
 
-## Tech Stack
+## 📋 Table of Contents
 
-| Layer | Technology |
-|---|---|
-| Mobile Client | React Native, Expo (SDK 52), TypeScript |
-| Navigation | Expo Router (file-based) |
-| State / Storage | React Context API, AsyncStorage |
-| HTTP Client | Axios |
-| Backend API | Java 21, Spring Boot 3, Spring Security |
-| Authentication | JWT (JSON Web Tokens) |
-| Database | MySQL 8 |
-| Build Tool | Maven (mvnw wrapper) |
+- [🛠️ Tech Stack](#️-tech-stack)
+- [📁 Project Structure](#-project-structure)
+- [✅ Prerequisites](#-prerequisites)
+- [⚙️ Installation & Setup](#️-installation--setup)
+- [🌐 Ngrok Tunnel Setup](#-ngrok-tunnel-setup)
+- [🔐 Environment Variables](#-environment-variables)
+- [📡 API Documentation](#-api-documentation)
+- [🔑 Test Credentials](#-test-credentials)
+- [👤 Author](#-author)
 
 ---
 
-## Project Structure
+## 🛠️ Tech Stack
+
+[↑ Back to Top](#-table-of-contents)
+
+| Layer | Technology |
+|---|---|
+| 📱 Mobile Client | React Native, Expo (SDK 52), TypeScript |
+| 🗺️ Navigation | Expo Router (file-based) |
+| 🗃️ State / Storage | React Context API, AsyncStorage |
+| 🌐 HTTP Client | Axios |
+| ☕ Backend API | Java 21, Spring Boot 3, Spring Security |
+| 🔐 Authentication | JWT (JSON Web Tokens) |
+| 🗄️ Database | MySQL 8 |
+| 🔨 Build Tool | Maven (mvnw wrapper) |
+
+---
+
+## 📁 Project Structure
+
+[↑ Back to Top](#-table-of-contents)
 
 ```
 RocketApp/
-├── client/                        # React Native / Expo app
+├── client/                        # 📱 React Native / Expo app
 │   ├── app/
 │   │   ├── (auth)/                # Login screen
 │   │   ├── (tabs)/
@@ -36,7 +54,7 @@ RocketApp/
 │   └── .env.example               # Environment variable template
 │
 ├── server/
-│   └── serverJAVA/                # Spring Boot REST API
+│   └── serverJAVA/                # ☕ Spring Boot REST API
 │       └── src/main/java/...
 │           ├── controller/api/    # REST controllers
 │           ├── service/           # Business logic
@@ -46,17 +64,21 @@ RocketApp/
 │           └── resources/
 │               └── application.properties
 │
-├── ai/                            # AI-native specifications
+├── ai/                            # 🤖 AI-native specifications
 │   ├── 🤖-ai-spec.md
 │   └── features/                  # 8 feature spec files
 │
-├── PostmanCollection.json         # Postman collection (all API endpoints)
+├── screenshots/                   # 📸 Proof of third-party account setup
+├── PostmanCollection.json         # 📬 Postman collection (all API endpoints)
+├── Research.md                    # 📝 Twilio & Notify.EU integration guides
 └── README.md
 ```
 
 ---
 
-## Prerequisites
+## ✅ Prerequisites
+
+[↑ Back to Top](#-table-of-contents)
 
 - **Node.js** 18+
 - **Java** 21
@@ -66,16 +88,18 @@ RocketApp/
 
 ---
 
-## Installation & Setup
+## ⚙️ Installation & Setup
 
-### 1. Clone the repository
+[↑ Back to Top](#-table-of-contents)
+
+### 1️⃣ Clone the repository
 
 ```bash
 git clone <repository-url>
 cd RocketApp
 ```
 
-### 2. Set up the database
+### 2️⃣ Set up the database
 
 Create a MySQL database named `rdelivery`:
 
@@ -83,7 +107,7 @@ Create a MySQL database named `rdelivery`:
 CREATE DATABASE rdelivery;
 ```
 
-### 3. Configure the server
+### 3️⃣ Configure the server
 
 Open `server/serverJAVA/src/main/resources/application.properties` and update the database credentials:
 
@@ -93,7 +117,7 @@ spring.datasource.username=YOUR_MYSQL_USERNAME
 spring.datasource.password=YOUR_MYSQL_PASSWORD
 ```
 
-### 4. Start the Java server
+### 4️⃣ Start the Java server
 
 ```bash
 cd server/serverJAVA
@@ -102,7 +126,7 @@ cd server/serverJAVA
 
 The API will be available at `http://localhost:8080`. On first run, the database schema is created automatically and seeded with sample data.
 
-### 5. Configure the client
+### 5️⃣ Configure the client
 
 ```bash
 cd client
@@ -119,24 +143,26 @@ To find your IP:
 - **macOS / Linux:** `ipconfig getifaddr en0` or `ip addr show`
 - **Windows:** `ipconfig` — look for the Wi-Fi IPv4 address
 
-### 6. Install client dependencies
+### 6️⃣ Install client dependencies
 
 ```bash
 cd client
 npm install
 ```
 
-### 7. Start the Expo dev server
+### 7️⃣ Start the Expo dev server
 
 ```bash
 npx expo start
 ```
 
-Scan the QR code with the **Expo Go** app on your phone. Make sure your phone and computer are on the same Wi-Fi network.
+Scan the QR code with the **Expo Go** app on your phone. Make sure your phone and computer are on the same Wi-Fi network. 📱
 
 ---
 
-## Ngrok Tunnel Setup
+## 🌐 Ngrok Tunnel Setup
+
+[↑ Back to Top](#-table-of-contents)
 
 Use ngrok when your phone and computer are on different networks, or when the local IP approach is not working.
 
@@ -175,13 +201,15 @@ cd client
 npx expo start --tunnel
 ```
 
-Scan the new QR code — the app will connect through the ngrok tunnel.
+Scan the new QR code — the app will connect through the ngrok tunnel. 🔗
 
-> **Note:** Free-tier ngrok URLs change every time you restart ngrok. Update `.env` each session.
+> ⚠️ **Note:** Free-tier ngrok URLs change every time you restart ngrok. Update `.env` each session.
 
 ---
 
-## Environment Variables
+## 🔐 Environment Variables
+
+[↑ Back to Top](#-table-of-contents)
 
 | Variable | Description | Example |
 |---|---|---|
@@ -189,21 +217,23 @@ Scan the new QR code — the app will connect through the ngrok tunnel.
 
 All environment variables are prefixed with `EXPO_PUBLIC_` so they are accessible in the React Native bundle. See `client/.env.example` for the template.
 
-> **Never commit your `.env` file.** It is listed in `.gitignore`.
+> 🚫 **Never commit your `.env` file.** It is listed in `.gitignore`.
 
 ---
 
-## API Documentation
+## 📡 API Documentation
+
+[↑ Back to Top](#-table-of-contents)
 
 The full Postman collection is available at `PostmanCollection.json` in the project root. Import it into Postman to run all endpoints with pre-configured variables.
 
-### Base URL
+### 🔗 Base URL
 
 ```
 http://localhost:8080
 ```
 
-### Authentication
+### 🔑 Authentication
 
 All endpoints except `POST /api/v1/auth/login` require a Bearer token in the `Authorization` header:
 
@@ -213,44 +243,44 @@ Authorization: Bearer <token>
 
 The token is returned by the login endpoint and is automatically saved by the Postman collection.
 
-### Endpoints
+### 📋 Endpoints
 
-#### Auth
+#### 🔐 Auth
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/api/v1/auth/login` | Authenticate and receive JWT token |
+| `POST` | `/api/v1/auth/login` | Authenticate and receive JWT token |
 
-#### Restaurants
+#### 🍽️ Restaurants
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/api/v1/restaurants` | Get all restaurants (optional `?rating=&price_range=`) |
-| GET | `/api/v1/restaurants/:id` | Get restaurant by ID |
-| GET | `/api/v1/restaurants/:id/menu` | Get menu items for a restaurant |
-| POST | `/api/v1/restaurants` | Create a restaurant |
-| PUT | `/api/v1/restaurants/:id` | Update a restaurant |
-| DELETE | `/api/v1/restaurants/:id` | Delete a restaurant |
+| `GET` | `/api/v1/restaurants` | Get all restaurants (optional `?rating=&price_range=`) |
+| `GET` | `/api/v1/restaurants/:id` | Get restaurant by ID |
+| `GET` | `/api/v1/restaurants/:id/menu` | Get menu items for a restaurant |
+| `POST` | `/api/v1/restaurants` | Create a restaurant |
+| `PUT` | `/api/v1/restaurants/:id` | Update a restaurant |
+| `DELETE` | `/api/v1/restaurants/:id` | Delete a restaurant |
 
-#### Products
+#### 🛒 Products
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/api/v1/products` | Get all products |
-| GET | `/api/v1/products/:id` | Get product by ID |
-| POST | `/api/v1/products` | Create a product |
-| PUT | `/api/v1/products/:id` | Update a product |
-| DELETE | `/api/v1/products/:id` | Delete a product |
+| `GET` | `/api/v1/products` | Get all products |
+| `GET` | `/api/v1/products/:id` | Get product by ID |
+| `POST` | `/api/v1/products` | Create a product |
+| `PUT` | `/api/v1/products/:id` | Update a product |
+| `DELETE` | `/api/v1/products/:id` | Delete a product |
 
-#### Orders
+#### 📦 Orders
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/api/v1/orders?type=customer&id=` | Get orders by customer, courier, or restaurant |
-| GET | `/api/v1/orders/pending` | Get all pending orders |
-| POST | `/api/v1/orders` | Create a new order |
-| PUT | `/api/v1/orders/:id` | Update an order |
-| PUT | `/api/v1/orders/:id/courier` | Assign a courier to an order |
-| PUT | `/api/v1/orders/:id/rating` | Rate an order |
-| DELETE | `/api/v1/orders/:id` | Delete an order |
+| `GET` | `/api/v1/orders?type=customer&id=` | Get orders by customer, courier, or restaurant |
+| `GET` | `/api/v1/orders/pending` | Get all pending orders |
+| `POST` | `/api/v1/orders` | Create a new order |
+| `PUT` | `/api/v1/orders/:id` | Update an order |
+| `PUT` | `/api/v1/orders/:id/courier` | Assign a courier to an order |
+| `PUT` | `/api/v1/orders/:id/rating` | Rate an order |
+| `DELETE` | `/api/v1/orders/:id` | Delete an order |
 
-### Sample Login Request
+### 💡 Sample Login Request
 
 ```json
 POST /api/v1/auth/login
@@ -262,16 +292,20 @@ POST /api/v1/auth/login
 
 ---
 
-## Test Credentials
+## 🔑 Test Credentials
+
+[↑ Back to Top](#-table-of-contents)
 
 | Role | Email | Password |
 |---|---|---|
-| Customer | `customer@gmail.com` | `password` |
-| Customer | `both@gmail.com` | `password` |
+| 👤 Customer | `customer@gmail.com` | `password` |
+| 👤 Customer | `both@gmail.com` | `password` |
 
 ---
 
-## Author
+## 👤 Author
+
+[↑ Back to Top](#-table-of-contents)
 
 **Charles Winfield**
-Full-Stack Development Student
+Full-Stack Development Student 🎓
