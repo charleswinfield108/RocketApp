@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/services/authContext';
 
 interface HeaderProps {
@@ -8,6 +9,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onLogout }) => {
   const { signout } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const handleLogout = async () => {
     await signout();
@@ -15,7 +17,7 @@ export const Header: React.FC<HeaderProps> = ({ onLogout }) => {
   };
 
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
       <Image
         source={require('@/assets/images/AppLogoV2.png')}
         style={styles.logo}
@@ -39,11 +41,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingBottom: 10,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
-    paddingTop: Platform.OS === 'ios' ? 12 : 10,
   },
   logo: {
     width: 140,
