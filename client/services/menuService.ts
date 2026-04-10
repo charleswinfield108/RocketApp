@@ -5,22 +5,26 @@ export interface MenuItem {
   name: string;
   description: string;
   price: number;
-  restaurantId: string;
 }
 
-export interface MenuResponse {
-  items: MenuItem[];
-  restaurantId: string;
-  restaurantName: string;
+// Shape returned by the API: { message: string, data: ApiProductDTO[] }
+interface ApiProductDTO {
+  id: number;
+  restaurant_id: number;
+  name: string;
+  description: string;
+  cost: number;
+}
+
+interface ApiMenuResponse {
+  message: string;
+  data: ApiProductDTO[];
 }
 
 // Menu API endpoints
 export const menuAPI = {
-  getMenuByRestaurantId: (restaurantId: string) =>
-    apiClient.get<MenuResponse>(`/api/v1/restaurants/${restaurantId}/menu`),
-  
-  getMenuItems: (restaurantId: string) =>
-    apiClient.get<MenuItem[]>(`/api/v1/restaurants/${restaurantId}/items`),
+  getMenuByRestaurantId: (restaurantId: number | string) =>
+    apiClient.get<ApiMenuResponse>(`/api/v1/restaurants/${restaurantId}/menu`),
 };
 
 export default menuAPI;

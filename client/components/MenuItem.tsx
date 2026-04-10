@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet } from 'react-native';
 import { Stepper } from './Stepper';
 
 export interface MenuItem {
@@ -20,36 +20,34 @@ export const MenuItemComponent: React.FC<MenuItemProps> = ({
   quantity,
   onQuantityChange,
 }) => {
-  const handleIncrement = () => {
-    onQuantityChange(item.id, quantity + 1);
-  };
-
-  const handleDecrement = () => {
-    onQuantityChange(item.id, quantity - 1);
-  };
-
   return (
     <View style={styles.container}>
+      {/* Thumbnail */}
+      <Image
+        source={require('@/assets/images/Restaurants/RestaurantMenu.jpg')}
+        style={styles.thumbnail}
+        resizeMode="cover"
+      />
+
+      {/* Item Info */}
       <View style={styles.itemInfo}>
-        <Text style={styles.name} numberOfLines={2}>
+        <Text style={styles.name} numberOfLines={1}>
           {item.name}
         </Text>
+        <Text style={styles.price}>$ {item.price.toFixed(2)}</Text>
         <Text style={styles.description} numberOfLines={2}>
           {item.description}
         </Text>
-        <Text style={styles.price}>
-          ${item.price.toFixed(2)}
-        </Text>
       </View>
-      <View style={styles.stepperContainer}>
-        <Stepper
-          value={quantity}
-          onIncrement={handleIncrement}
-          onDecrement={handleDecrement}
-          min={0}
-          max={999}
-        />
-      </View>
+
+      {/* Stepper */}
+      <Stepper
+        value={quantity}
+        onIncrement={() => onQuantityChange(item.id, quantity + 1)}
+        onDecrement={() => onQuantityChange(item.id, quantity - 1)}
+        min={0}
+        max={999}
+      />
     </View>
   );
 };
@@ -57,35 +55,37 @@ export const MenuItemComponent: React.FC<MenuItemProps> = ({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
     backgroundColor: '#FFFFFF',
+    gap: 12,
+  },
+  thumbnail: {
+    width: 72,
+    height: 72,
+    borderRadius: 6,
+    backgroundColor: '#F0F0F0',
   },
   itemInfo: {
     flex: 1,
-    marginRight: 12,
   },
   name: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#222126',
-    marginBottom: 4,
-  },
-  description: {
-    fontSize: 13,
-    color: '#666666',
-    marginBottom: 6,
+    marginBottom: 2,
   },
   price: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#DA583B',
+    color: '#222126',
+    marginBottom: 2,
   },
-  stepperContainer: {
-    paddingVertical: 8,
+  description: {
+    fontSize: 12,
+    color: '#666666',
   },
 });

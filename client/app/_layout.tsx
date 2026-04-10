@@ -1,19 +1,27 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth } from '@/services/authContext';
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
-
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const { isSignedIn, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (isSignedIn) {
+        router.replace('/(tabs)/(restaurant)');
+      } else {
+        router.replace('/(auth)/login');
+      }
+    }
+  }, [isSignedIn, isLoading]);
 
   if (isLoading) {
     return (
@@ -26,22 +34,8 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        {isSignedIn ? (
-          <>
-            {/* Customer app screens - shown when user is logged in */}
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          </>
-        ) : (
-          <>
-            {/* Auth screens - shown when user is not logged in */}
-            <Stack.Screen
-              name="(auth)"
-              options={{
-                headerShown: false,
-              }}
-            />
-          </>
-        )}
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

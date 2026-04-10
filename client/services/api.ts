@@ -54,7 +54,7 @@ export const authAPI = {
 export const restaurantsAPI = {
   getAll: () =>
     apiClient.get('/api/v1/restaurants'),
-  getById: (id: string) =>
+  getById: (id: number | string) =>
     apiClient.get(`/api/v1/restaurants/${id}`),
 };
 
@@ -64,6 +64,6 @@ export const ordersAPI = {
     apiClient.get('/api/v1/orders'),
   create: (orderData: any) =>
     apiClient.post('/api/v1/orders', orderData),
-  getById: (id: string) =>
+  getById: (id: number | string) =>
     apiClient.get(`/api/v1/orders/${id}`),
 };

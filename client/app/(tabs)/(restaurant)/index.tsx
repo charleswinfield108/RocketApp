@@ -7,79 +7,58 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
+import { restaurantsAPI } from '@/services/api';
 import { RestaurantCard } from '@/components/RestaurantCard';
 import { FilterBar } from '@/components/FilterBar';
+import { Header } from '@/components/Header';
+
+const RESTAURANT_IMAGES = [
+  require('@/assets/images/Restaurants/cuisinePizza.jpg'),
+  require('@/assets/images/Restaurants/cuisineJapanese.jpg'),
+  require('@/assets/images/Restaurants/cuisinePasta.jpg'),
+  require('@/assets/images/Restaurants/cuisineGreek.jpg'),
+  require('@/assets/images/Restaurants/cuisineSoutheast.jpg'),
+  require('@/assets/images/Restaurants/cuisineViet.jpg'),
+];
 
 interface Restaurant {
-  id: string;
+  id: number;
   name: string;
   rating: number;
-  priceRange: number;
-  image: any;
+  price_range: number;
+  imageUrl?: string;
   description?: string;
 }
 
-// Mock restaurant data with images from assets
-const MOCK_RESTAURANTS: Restaurant[] = [
-  {
-    id: 'rest-001',
-    name: 'Pizza Palace',
-    rating: 4.5,
-    priceRange: 2,
-    image: require('@/assets/images/Restaurants/cuisinePizza.jpg'),
-    description: 'Italian pizza & pasta',
-  },
-  {
-    id: 'rest-002',
-    name: 'Greek Taverna',
-    rating: 4.3,
-    priceRange: 2,
-    image: require('@/assets/images/Restaurants/cuisineGreek.jpg'),
-    description: 'Authentic Greek cuisine',
-  },
-  {
-    id: 'rest-003',
-    name: 'Japanese Delights',
-    rating: 4.8,
-    priceRange: 3,
-    image: require('@/assets/images/Restaurants/cuisineJapanese.jpg'),
-    description: 'Sushi & ramen',
-  },
-  {
-    id: 'rest-004',
-    name: 'Pasta Heaven',
-    rating: 4.6,
-    priceRange: 2,
-    image: require('@/assets/images/Restaurants/cuisinePasta.jpg'),
-    description: 'Fresh Italian pasta',
-  },
-  {
-    id: 'rest-005',
-    name: 'Southeast Asian Fusion',
-    rating: 4.2,
-    priceRange: 2,
-    image: require('@/assets/images/Restaurants/cuisineSoutheast.jpg'),
-    description: 'Thai & Vietnamese',
-  },
-  {
-    id: 'rest-006',
-    name: 'Vietnamese Pho House',
-    rating: 4.4,
-    priceRange: 1,
-    image: require('@/assets/images/Restaurants/cuisineViet.jpg'),
-    description: 'Pho & Vietnamese classics',
-  },
-];
-
 export default function RestaurantListScreen() {
-  const [restaurants, setRestaurants] = useState<Restaurant[]>(MOCK_RESTAURANTS);
-  const [filteredRestaurants, setFilteredRestaurants] = useState<Restaurant[]>(
-    MOCK_RESTAURANTS
-  );
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [filteredRestaurants, setFilteredRestaurants] = useState<Restaurant[]>([]);
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [selectedPrice, setSelectedPrice] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Fetch restaurants from API on mount
+  useEffect(() => {
+    fetchRestaurants();
+  }, []);
+
+  const fetchRestaurants = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await restaurantsAPI.getAll();
+      // API wraps response in { message, data }
+      const data = response.data.data || [];
+      setRestaurants(data);
+      setFilteredRestaurants(data);
+    } catch (err) {
+      console.error('Error loading restaurants:', err);
+      setError('Failed to load restaurants. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   // Apply filters whenever they change
   useEffect(() => {
@@ -92,7 +71,7 @@ export default function RestaurantListScreen() {
 
     // Filter by price
     if (selectedPrice !== null) {
-      filtered = filtered.filter((r) => r.priceRange === selectedPrice);
+      filtered = filtered.filter((r) => r.price_range === selectedPrice);
     }
 
     setFilteredRestaurants(filtered);
@@ -107,7 +86,7 @@ export default function RestaurantListScreen() {
   };
 
   const handleRetry = () => {
-    setError(null);
+    fetchRestaurants();
   };
 
   if (loading) {
@@ -132,6 +111,8 @@ export default function RestaurantListScreen() {
 
   return (
     <View style={styles.container}>
+      <Header />
+
       {/* Filter Bar */}
       <FilterBar
         onRatingChange={handleRatingChange}
@@ -148,14 +129,14 @@ export default function RestaurantListScreen() {
         <FlatList
           data={filteredRestaurants}
           numColumns={2}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <RestaurantCard
               id={item.id}
               name={item.name}
               rating={item.rating}
-              priceRange={item.priceRange}
-              image={item.image}
+              priceRange={item.price_range}
+              image={RESTAURANT_IMAGES[item.id % RESTAURANT_IMAGES.length]}
             />
           )}
           columnWrapperStyle={styles.row}
@@ -184,6 +165,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    overflow: 'visible',
   },
   centerContainer: {
     flex: 1,

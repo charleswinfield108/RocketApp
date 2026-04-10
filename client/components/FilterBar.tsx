@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 
@@ -63,7 +63,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             <FontAwesomeIcon
               icon={faChevronDown as any}
               size={14}
-              color="#DA583B"
+              color="#FFFFFF"
             />
           </TouchableOpacity>
 
@@ -108,7 +108,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             <FontAwesomeIcon
               icon={faChevronDown as any}
               size={14}
-              color="#DA583B"
+              color="#FFFFFF"
             />
           </TouchableOpacity>
 
@@ -150,9 +150,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
+    zIndex: 100,
+    overflow: 'visible',
   },
   filterContainer: {
     flex: 1,
+    zIndex: 100,
+    overflow: 'visible',
   },
   label: {
     fontSize: 12,
@@ -164,6 +168,8 @@ const styles = StyleSheet.create({
   },
   dropdownWrapper: {
     position: 'relative',
+    zIndex: 100,
+    overflow: 'visible',
   },
   dropdown: {
     flexDirection: 'row',
@@ -171,15 +177,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    backgroundColor: '#DA583B',
     borderRadius: 6,
   },
   dropdownText: {
     fontSize: 13,
-    fontWeight: '500',
-    color: '#222126',
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   optionsContainer: {
     position: 'absolute',

@@ -12,8 +12,7 @@ export default function RestaurantLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: 'Restaurants',
-          headerShadowVisible: false,
+          headerShown: false,
         }}
       />
 

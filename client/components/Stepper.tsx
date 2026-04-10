@@ -68,11 +68,11 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#DA583B',
+    backgroundColor: '#222126',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#DA583B',
+    borderColor: '#222126',
   },
   buttonDisabled: {
     backgroundColor: '#F0F0F0',

@@ -25,6 +25,7 @@ import java.util.Optional;
 
 
 @RestController
+@org.springframework.web.bind.annotation.RequestMapping("/api/v1/auth")
 public class AuthApiController {
     private final CourierService courierService;
     private final CustomerService customerService;
@@ -36,7 +37,7 @@ public class AuthApiController {
         this.courierService = courierService;
         this.customerService = customerService;
     }
-    @PostMapping("/api/auth")
+    @PostMapping("/login")
     public ResponseEntity<?> authenticate(@RequestBody @Valid AuthRequestDTO request){
         try {
             Authentication authentication = authManager.authenticate(

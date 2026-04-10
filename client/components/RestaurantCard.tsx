@@ -3,11 +3,12 @@ import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 
 interface RestaurantCardProps {
-  id: string;
+  id: number | string;
   name: string;
   rating: number;
   priceRange: number;
-  image: any; // require() import
+  image?: string | number; // Can be URL string or require() import
+  onPress?: () => void;
 }
 
 export const RestaurantCard: React.FC<RestaurantCardProps> = ({
@@ -16,25 +17,39 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
   rating,
   priceRange,
   image,
+  onPress,
 }) => {
   const router = useRouter();
 
   const handlePress = () => {
-    router.push({
-      pathname: '/(tabs)/(restaurant)/[id]',
-      params: { id },
-    });
+    if (onPress) {
+      onPress();
+    } else {
+      const restaurantId = String(id);
+      console.log('Navigating to restaurant:', restaurantId);
+      // Use href for simpler dynamic routing
+      router.push(`/(tabs)/(restaurant)/${restaurantId}`);
+    }
   };
 
-  // Convert price range to dollar signs
-  const getPriceDisplay = (price: number) => {
-    return '$'.repeat(Math.min(price, 3)) || '$';
+  const getStarDisplay = (r: number) => '★'.repeat(Math.round(r)) + '☆'.repeat(5 - Math.round(r));
+
+  const getPriceDisplay = (p: number) => '$'.repeat(p);
+
+  // Get initials from restaurant name
+  const getInitials = () => {
+    const words = name.split(' ');
+    return words
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join('')
+      .toUpperCase();
   };
 
-  // Convert rating to star display
-  const getStarDisplay = (rating: number) => {
-    const stars = Math.floor(rating);
-    return '★'.repeat(stars);
+  // Get a consistent color based on ID
+  const getPlaceholderColor = () => {
+    const colors = ['#DA583B', '#609475', '#222126', '#851919', '#F0CB67', '#DA583B'];
+    return colors[(id as number) % colors.length];
   };
 
   return (
@@ -44,28 +59,29 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
       activeOpacity={0.8}
     >
       {/* Restaurant Image */}
-      <Image
-        source={image}
-        style={styles.image}
-        resizeMode="cover"
-      />
+      {image ? (
+        <Image
+          source={typeof image === 'string' ? { uri: image } : image}
+          style={styles.image}
+          resizeMode="cover"
+        />
+      ) : (
+        <View style={[styles.image, styles.imagePlaceholder, { backgroundColor: getPlaceholderColor() }]}>
+          <Text style={styles.placeholderText}>{getInitials()}</Text>
+        </View>
+      )}
 
       {/* Card Content */}
       <View style={styles.content}>
-        {/* Restaurant Name */}
+        {/* Restaurant Name + Price */}
         <Text style={styles.name} numberOfLines={2}>
-          {name}
+          {name} ({getPriceDisplay(priceRange)})
         </Text>
 
-        {/* Rating and Price */}
-        <View style={styles.infoRow}>
-          <Text style={styles.rating}>
-            {getStarDisplay(rating)}
-          </Text>
-          <Text style={styles.price}>
-            {getPriceDisplay(priceRange)}
-          </Text>
-        </View>
+        {/* Stars */}
+        <Text style={styles.rating}>
+          {getStarDisplay(rating)}
+        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -80,15 +96,22 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     overflow: 'hidden',
     elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.1)',
   },
   image: {
     width: '100%',
     height: 160,
     backgroundColor: '#F0F0F0',
+  },
+  imagePlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#E8E8E8',
+  },
+  placeholderText: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
   },
   content: {
     padding: 12,
@@ -99,19 +122,10 @@ const styles = StyleSheet.create({
     color: '#222126',
     marginBottom: 8,
   },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   rating: {
     fontSize: 12,
     color: '#F0CB67',
     fontWeight: '600',
-  },
-  price: {
-    fontSize: 12,
-    color: '#DA583B',
-    fontWeight: '600',
+    marginTop: 4,
   },
 });

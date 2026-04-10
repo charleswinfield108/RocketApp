@@ -15,170 +15,67 @@ interface OrderHistoryDetailModalProps {
   onClose: () => void;
 }
 
-const getStatusColor = (status: string): string => {
-  switch (status.toLowerCase()) {
-    case 'delivered':
-      return '#4CAF50';
-    case 'preparing':
-      return '#2196F3';
-    case 'out for delivery':
-      return '#FF9800';
-    case 'cancelled':
-      return '#F44336';
-    case 'confirmed':
-    default:
-      return '#9E9E9E';
-  }
-};
-
-const formatDate = (dateString: string): string => {
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return dateString;
-  }
-};
-
-const capitalizeStatus = (status: string): string => {
-  return status
-    .split(' ')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
-
 export const OrderHistoryDetailModal: React.FC<OrderHistoryDetailModalProps> = ({
   visible,
   order,
   onClose,
 }) => {
-  if (!order) {
-    return null;
-  }
+  if (!order) return null;
+
+  const total = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const formatDate = (dateString: string): string => {
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+    } catch {
+      return dateString;
+    }
+  };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
-          {/* Header */}
+
+          {/* Dark Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Order Details</Text>
-            <TouchableOpacity onPress={onClose}>
-              <Text style={styles.closeButton}>✕</Text>
+            <View style={styles.headerContent}>
+              <Text style={styles.restaurantName}>{order.restaurantName}</Text>
+              <Text style={styles.headerDetail}>Order Date: {formatDate(order.createdAt)}</Text>
+              <Text style={styles.headerDetail}>Status: {order.status.toUpperCase()}</Text>
+              <Text style={styles.headerDetail}>
+                Courier: {order.courier?.name ?? 'Not yet assigned'}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+              <Text style={styles.closeBtnText}>✕</Text>
             </TouchableOpacity>
           </View>
 
+          {/* Items */}
           <ScrollView style={styles.content}>
-            {/* Order ID and Date */}
-            <View style={styles.section}>
-              <View style={styles.infoRow}>
-                <Text style={styles.label}>Order ID</Text>
-                <Text style={styles.value}>{order.orderId}</Text>
+            {order.items.map((item) => (
+              <View key={item.itemId} style={styles.itemRow}>
+                <Text style={styles.itemName} numberOfLines={1}>
+                  {item.name}
+                </Text>
+                <Text style={styles.itemQty}>x{item.quantity}</Text>
+                <Text style={styles.itemPrice}>$ {(item.price * item.quantity).toFixed(2)}</Text>
               </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.label}>Date</Text>
-                <Text style={styles.value}>{formatDate(order.createdAt)}</Text>
-              </View>
-            </View>
+            ))}
 
-            {/* Restaurant Info */}
-            <View style={styles.section}>
-              <View style={styles.infoRow}>
-                <Text style={styles.label}>Restaurant</Text>
-                <Text style={styles.value}>{order.restaurantName}</Text>
-              </View>
-            </View>
-
-            {/* Status */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Status</Text>
-              <View
-                style={[
-                  styles.statusBadge,
-                  { backgroundColor: getStatusColor(order.status) },
-                ]}
-              >
-                <Text style={styles.statusText}>{capitalizeStatus(order.status)}</Text>
-              </View>
-            </View>
-
-            {/* Courier Information (if available) */}
-            {order.courier && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Courier Information</Text>
-                <View style={styles.infoRow}>
-                  <Text style={styles.label}>Courier Name</Text>
-                  <Text style={styles.value}>{order.courier.name}</Text>
-                </View>
-                {order.courier.phone && (
-                  <View style={styles.infoRow}>
-                    <Text style={styles.label}>Phone</Text>
-                    <Text style={[styles.value, styles.phoneValue]}>
-                      {order.courier.phone}
-                    </Text>
-                  </View>
-                )}
-                {order.courier.status && (
-                  <View style={styles.infoRow}>
-                    <Text style={styles.label}>Courier Status</Text>
-                    <Text style={styles.value}>{capitalizeStatus(order.courier.status)}</Text>
-                  </View>
-                )}
-                {order.courier.deliveryTime && (
-                  <View style={styles.infoRow}>
-                    <Text style={styles.label}>Delivery Time</Text>
-                    <Text style={styles.value}>{order.courier.deliveryTime}</Text>
-                  </View>
-                )}
-              </View>
-            )}
-
-            {/* Order Items */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Items</Text>
-              {order.items.map((item) => (
-                <View key={item.itemId} style={styles.itemRow}>
-                  <View style={styles.itemInfo}>
-                    <Text style={styles.itemName}>{item.name}</Text>
-                    <Text style={styles.itemQty}>Qty: {item.quantity}</Text>
-                  </View>
-                  <Text style={styles.itemPrice}>
-                    ${(item.price * item.quantity).toFixed(2)}
-                  </Text>
-                </View>
-              ))}
-            </View>
-
-            {/* Delivery Address (if available) */}
-            {order.deliveryAddress && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Delivery Address</Text>
-                <Text style={styles.addressText}>{order.deliveryAddress}</Text>
-              </View>
-            )}
-
-            {/* Divider */}
+            {/* Divider + Total */}
             <View style={styles.divider} />
-
-            {/* Total */}
-            <View style={styles.totalSection}>
-              <Text style={styles.totalLabel}>Order Total</Text>
-              <Text style={styles.totalPrice}>${order.totalPrice.toFixed(2)}</Text>
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>TOTAL:</Text>
+              <Text style={styles.totalAmount}>$ {total.toFixed(2)}</Text>
             </View>
           </ScrollView>
 
-          {/* Close Button */}
-          <View style={styles.footer}>
-            <TouchableOpacity style={styles.closeModalButton} onPress={onClose} activeOpacity={0.8}>
-              <Text style={styles.closeModalButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </View>
     </Modal>
@@ -188,111 +85,74 @@ export const OrderHistoryDetailModal: React.FC<OrderHistoryDetailModalProps> = (
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
   modalContainer: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: 8,
+    overflow: 'hidden',
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    maxHeight: '90%',
   },
   header: {
+    backgroundColor: '#222126',
+    padding: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    alignItems: 'flex-start',
   },
-  title: {
+  headerContent: {
+    flex: 1,
+    marginRight: 12,
+  },
+  restaurantName: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#222126',
+    color: '#DA583B',
+    marginBottom: 6,
   },
-  closeButton: {
-    fontSize: 20,
-    color: '#666666',
+  headerDetail: {
+    fontSize: 13,
+    color: '#CCCCCC',
+    marginBottom: 2,
+  },
+  closeBtn: {
+    padding: 4,
+  },
+  closeBtnText: {
+    fontSize: 18,
+    color: '#FFFFFF',
   },
   content: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#222126',
-    marginBottom: 12,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
-  },
-  label: {
-    fontSize: 13,
-    color: '#999999',
-    fontWeight: '500',
-  },
-  value: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#222126',
-  },
-  phoneValue: {
-    color: '#DA583B',
-    textDecorationLine: 'underline',
-  },
-  addressText: {
-    fontSize: 13,
-    color: '#555555',
-    lineHeight: 20,
-  },
-  statusBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    padding: 16,
+    maxHeight: 400,
   },
   itemRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
-  },
-  itemInfo: {
-    flex: 1,
+    borderBottomColor: '#F0F0F0',
+    gap: 8,
   },
   itemName: {
-    fontSize: 13,
-    fontWeight: '600',
+    flex: 1,
+    fontSize: 14,
     color: '#222126',
-    marginBottom: 4,
   },
   itemQty: {
-    fontSize: 12,
-    color: '#999999',
+    fontSize: 14,
+    color: '#666666',
+    minWidth: 28,
+    textAlign: 'center',
   },
   itemPrice: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#DA583B',
-    marginLeft: 8,
+    color: '#222126',
     minWidth: 70,
     textAlign: 'right',
   },
@@ -301,38 +161,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#E0E0E0',
     marginVertical: 12,
   },
-  totalSection: {
+  totalRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
-    paddingVertical: 12,
+    gap: 12,
+    paddingBottom: 8,
   },
   totalLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     color: '#222126',
   },
-  totalPrice: {
-    fontSize: 16,
+  totalAmount: {
+    fontSize: 15,
     fontWeight: '700',
-    color: '#DA583B',
-  },
-  footer: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-  },
-  closeModalButton: {
-    paddingVertical: 12,
-    backgroundColor: '#DA583B',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeModalButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    color: '#222126',
   },
 });

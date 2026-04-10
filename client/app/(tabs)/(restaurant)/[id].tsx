@@ -5,26 +5,21 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-  Image,
   TouchableOpacity,
-  FlatList,
-  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { MenuItemComponent, MenuItem } from '../../../components/MenuItem';
 import { ConfirmationModal } from '../../../components/ConfirmationModal';
+import { Header } from '../../../components/Header';
+import { useAuth } from '../../../services/authContext';
 import menuAPI from '../../../services/menuService';
 import { restaurantsAPI, ordersAPI } from '../../../services/api';
 
-interface CartItem extends MenuItem {
-  quantity: number;
-}
-
 interface RestaurantInfo {
-  id: string;
+  id: number;
   name: string;
   rating: number;
-  priceRange: number;
+  price_range: number;
 }
 
 export default function RestaurantDetailScreen() {
@@ -36,142 +31,101 @@ export default function RestaurantDetailScreen() {
   const [restaurant, setRestaurant] = useState<RestaurantInfo | null>(null);
   const [isConfirmationModalVisible, setIsConfirmationModalVisible] = useState(false);
 
-  // Current restaurant ID for detecting changes
-  const currentRestaurantId = id as string;
+  const { customerId } = useAuth();
+  const currentRestaurantId = id ? parseInt(id as string, 10) : NaN;
 
-  // Reset cart when restaurant changes
   const resetCart = useCallback(() => {
     setCart({});
   }, []);
 
-  // Load menu when component mounts or restaurant ID changes
   const loadMenu = useCallback(async () => {
-    if (!currentRestaurantId) return;
+    if (!id || isNaN(currentRestaurantId)) {
+      setError('Invalid restaurant ID');
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     setError(null);
 
     try {
-      // Reset cart when switching restaurants
       resetCart();
 
-      // Fetch restaurant details
       const restaurantResponse = await restaurantsAPI.getById(currentRestaurantId);
-      setRestaurant(restaurantResponse.data);
+      const restaurantData = restaurantResponse.data.data || restaurantResponse.data;
+      setRestaurant(restaurantData);
 
-      // Fetch menu items
       const menuResponse = await menuAPI.getMenuByRestaurantId(currentRestaurantId);
-      const items = Array.isArray(menuResponse.data)
-        ? menuResponse.data
-        : menuResponse.data.items || [];
+      const rawItems = menuResponse.data.data || [];
+      const items: MenuItem[] = rawItems.map((p) => ({
+        id: String(p.id),
+        name: p.name,
+        description: p.description,
+        price: p.cost,
+      }));
       setMenuItems(items);
 
-      // Initialize cart with zeros
       const initialCart: Record<string, number> = {};
       items.forEach((item) => {
         initialCart[item.id] = 0;
       });
       setCart(initialCart);
     } catch (err) {
-      console.error('Error loading menu:', err);
       setError('Failed to load menu. Please try again.');
     } finally {
       setLoading(false);
     }
   }, [currentRestaurantId, resetCart]);
 
-  // Load menu on mount and when restaurant ID changes
   useEffect(() => {
     loadMenu();
   }, [loadMenu]);
 
-  // Also reset cart when screen comes into focus (user navigates back)
   useFocusEffect(
     useCallback(() => {
       resetCart();
     }, [resetCart])
   );
 
-  // Handle quantity change - only allow via buttons, minimum 0
   const handleQuantityChange = (itemId: string, newQuantity: number) => {
-    // Ensure quantity never goes below 0
-    const quantity = Math.max(0, newQuantity);
-    setCart((prev) => ({
-      ...prev,
-      [itemId]: quantity,
-    }));
+    setCart((prev) => ({ ...prev, [itemId]: Math.max(0, newQuantity) }));
   };
 
-  // Check if any items have quantity > 0
   const hasItems = Object.values(cart).some((qty) => qty > 0);
 
-  // Calculate total items and price
-  const getTotals = () => {
-    let totalItems = 0;
-    let totalPrice = 0;
-
-    Object.entries(cart).forEach(([itemId, quantity]) => {
-      const item = menuItems.find((m) => m.id === itemId);
-      if (item) {
-        totalItems += quantity;
-        totalPrice += item.price * quantity;
-      }
-    });
-
-    return { totalItems, totalPrice };
-  };
-
-  const { totalItems, totalPrice } = getTotals();
-
-  const handleCreateOrder = () => {
-    if (!hasItems) {
-      Alert.alert('Alert', 'Please select at least one item');
-      return;
-    }
-    // Open confirmation modal
-    setIsConfirmationModalVisible(true);
-  };
+  const totalPrice = Object.entries(cart).reduce((sum, [itemId, quantity]) => {
+    const item = menuItems.find((m) => m.id === itemId);
+    return sum + (item ? item.price * quantity : 0);
+  }, 0);
 
   const handleConfirmOrder = async () => {
-    // Prepare order data
     const orderItems = Object.entries(cart)
       .filter(([, quantity]) => quantity > 0)
-      .map(([itemId, quantity]) => ({
-        menuItemId: itemId,
-        quantity,
-      }));
+      .map(([itemId, quantity]) => ({ menuItemId: itemId, quantity }));
 
-    if (orderItems.length === 0) {
-      throw new Error('Please select at least one item');
+    if (orderItems.length === 0) throw new Error('Please select at least one item');
+
+    const response = await ordersAPI.create({
+      restaurant_id: currentRestaurantId,
+      customer_id: customerId,
+      products: orderItems.map((i) => ({ id: parseInt(i.menuItemId, 10), quantity: i.quantity })),
+    });
+
+    if (response.status !== 201 && response.status !== 200) {
+      throw new Error('Order submission failed');
     }
 
-    try {
-      // Submit order to API
-      const orderData = {
-        restaurantId: currentRestaurantId,
-        items: orderItems,
-        totalPrice,
-      };
-
-      const response = await ordersAPI.create(orderData);
-      
-      if (response.status === 201 || response.status === 200) {
-        // Clear cart after successful order
-        resetCart();
-        // Close modal after success (handled by ConfirmationModal auto-close)
-      } else {
-        throw new Error('Order submission failed');
-      }
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to place order. Please try again.';
-      throw new Error(errorMessage);
-    }
+    resetCart();
   };
+
+  const getStars = (rating: number) =>
+    '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating));
+
+  const getPriceDisplay = (priceRange: number) => '$'.repeat(priceRange);
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <View style={styles.centered}>
         <ActivityIndicator size="large" color="#DA583B" />
         <Text style={styles.loadingText}>Loading menu...</Text>
       </View>
@@ -180,7 +134,7 @@ export default function RestaurantDetailScreen() {
 
   if (error) {
     return (
-      <View style={styles.container}>
+      <View style={styles.centered}>
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={loadMenu}>
           <Text style={styles.retryButtonText}>Retry</Text>
@@ -191,77 +145,51 @@ export default function RestaurantDetailScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Restaurant Menu Image */}
-      <Image
-        source={require('../../../assets/images/RestaurantMenu.jpg')}
-        style={styles.menuImage}
-        resizeMode="cover"
-      />
+      <Header />
 
-      {/* Restaurant Header */}
-      {restaurant && (
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.restaurantName}>{restaurant.name}</Text>
-            <Text style={styles.restaurantInfo}>
-              {'★'.repeat(Math.floor(restaurant.rating))} • {'$'.repeat(restaurant.priceRange)}
-            </Text>
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Section Title */}
+        <Text style={styles.sectionTitle}>RESTAURANT MENU</Text>
+
+        {/* Restaurant Info Row */}
+        {restaurant && (
+          <View style={styles.restaurantRow}>
+            <View style={styles.restaurantInfo}>
+              <Text style={styles.restaurantName}>{restaurant.name}</Text>
+              <Text style={styles.restaurantDetail}>
+                Price: {getPriceDisplay(restaurant.price_range)}
+              </Text>
+              <Text style={styles.restaurantDetail}>
+                Rating: {getStars(restaurant.rating)}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.createOrderButton, !hasItems && styles.createOrderButtonDisabled]}
+              onPress={() => setIsConfirmationModalVisible(true)}
+              disabled={!hasItems}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.createOrderButtonText}>Create Order</Text>
+            </TouchableOpacity>
           </View>
-        </View>
-      )}
+        )}
 
-      {/* Menu Items List */}
-      {menuItems.length > 0 ? (
-        <FlatList
-          data={menuItems}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
+        {/* Menu Items */}
+        {menuItems.length > 0 ? (
+          menuItems.map((item) => (
             <MenuItemComponent
+              key={item.id}
               item={item}
               quantity={cart[item.id] || 0}
               onQuantityChange={handleQuantityChange}
             />
-          )}
-          scrollEnabled={false}
-          style={styles.menuList}
-        />
-      ) : (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>No menu items available</Text>
-        </View>
-      )}
-
-      {/* Create Order Button */}
-      <View style={styles.footer}>
-        {hasItems && (
-          <View style={styles.totalsContainer}>
-            <View style={styles.totalsRow}>
-              <Text style={styles.totalsLabel}>Items:</Text>
-              <Text style={styles.totalsValue}>{totalItems}</Text>
-            </View>
-            <View style={styles.totalsRow}>
-              <Text style={styles.totalsLabel}>Total:</Text>
-              <Text style={styles.totalsValue}>${totalPrice.toFixed(2)}</Text>
-            </View>
+          ))
+        ) : (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>No menu items available</Text>
           </View>
         )}
-
-        <TouchableOpacity
-          style={[styles.createOrderButton, !hasItems && styles.createOrderButtonDisabled]}
-          onPress={handleCreateOrder}
-          disabled={!hasItems}
-          activeOpacity={hasItems ? 0.8 : 1}
-        >
-          <Text
-            style={[
-              styles.createOrderButtonText,
-              !hasItems && styles.createOrderButtonTextDisabled,
-            ]}
-          >
-            {hasItems ? 'Create Order' : 'Add Items to Order'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      </ScrollView>
 
       {/* Confirmation Modal */}
       <ConfirmationModal
@@ -288,35 +216,66 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  menuImage: {
-    width: '100%',
-    height: 200,
-    backgroundColor: '#F0F0F0',
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
   },
-  header: {
+  scroll: {
+    flex: 1,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#222126',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 4,
+  },
+  restaurantRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
+  restaurantInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
   restaurantName: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '700',
     color: '#222126',
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  restaurantInfo: {
+  restaurantDetail: {
     fontSize: 13,
-    color: '#666666',
+    color: '#444444',
+    marginBottom: 1,
   },
-  menuList: {
-    flex: 1,
+  createOrderButton: {
+    backgroundColor: '#DA583B',
+    borderRadius: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+  },
+  createOrderButtonDisabled: {
+    backgroundColor: '#CCCCCC',
+  },
+  createOrderButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: 40,
   },
   emptyStateText: {
     fontSize: 16,
@@ -342,51 +301,5 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: '#FFFFFF',
     fontWeight: '600',
-  },
-  footer: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-  },
-  totalsContainer: {
-    marginBottom: 12,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  totalsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  totalsLabel: {
-    fontSize: 14,
-    color: '#666666',
-    fontWeight: '500',
-  },
-  totalsValue: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#222126',
-  },
-  createOrderButton: {
-    paddingVertical: 14,
-    backgroundColor: '#DA583B',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  createOrderButtonDisabled: {
-    backgroundColor: '#E8E8E8',
-  },
-  createOrderButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  createOrderButtonTextDisabled: {
-    color: '#CCCCCC',
   },
 });

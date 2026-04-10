@@ -9,46 +9,15 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
+import { Header } from '../../components/Header';
 import { OrderHistoryDetailModal } from '../../components/OrderHistoryDetailModal';
+import { useAuth } from '../../services/authContext';
 import orderHistoryAPI, { Order } from '../../services/orderHistoryService';
 
-const getStatusColor = (status: string): string => {
-  switch (status.toLowerCase()) {
-    case 'delivered':
-      return '#4CAF50';
-    case 'preparing':
-      return '#2196F3';
-    case 'out for delivery':
-      return '#FF9800';
-    case 'cancelled':
-      return '#F44336';
-    case 'confirmed':
-    default:
-      return '#9E9E9E';
-  }
-};
-
-const capitalizeStatus = (status: string): string => {
-  return status
-    .split(' ')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
-
-const formatOrderDate = (dateString: string): string => {
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  } catch {
-    return dateString;
-  }
-};
-
 export default function OrderHistoryScreen() {
+  const { customerId } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -56,71 +25,63 @@ export default function OrderHistoryScreen() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
 
-  // Load orders from API
   const loadOrders = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await orderHistoryAPI.getHistory();
-      const orderList = response.data.orders || [];
-      // Sort by date (newest first)
+      if (!customerId) return;
+      const response = await orderHistoryAPI.getHistory(customerId);
+      const orderList = Array.isArray(response.data.orders)
+        ? response.data.orders
+        : [];
       orderList.sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
       setOrders(orderList);
     } catch (err) {
-      console.error('Error loading order history:', err);
       setError('Failed to load order history. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [customerId]);
 
-  // Load orders on component mount
   useEffect(() => {
     loadOrders();
   }, [loadOrders]);
 
-  // Reload orders when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       loadOrders();
     }, [loadOrders])
   );
 
-  // Handle pull-to-refresh
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      const response = await orderHistoryAPI.getHistory();
-      const orderList = response.data.orders || [];
+      if (!customerId) return;
+      const response = await orderHistoryAPI.getHistory(customerId);
+      const orderList = Array.isArray(response.data.orders)
+        ? response.data.orders
+        : [];
       orderList.sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
       setOrders(orderList);
-    } catch (err) {
-      console.error('Error refreshing orders:', err);
+    } catch {
       setError('Failed to refresh. Please try again.');
     } finally {
       setRefreshing(false);
     }
   }, []);
 
-  // Handle View button click
   const handleViewOrder = (order: Order) => {
     setSelectedOrder(order);
     setDetailModalVisible(true);
   };
 
-  // Handle modal close
-  const handleCloseModal = () => {
-    setDetailModalVisible(false);
-    setSelectedOrder(null);
-  };
-
   if (loading) {
     return (
-      <View style={styles.container}>
+      <View style={styles.centered}>
         <ActivityIndicator size="large" color="#DA583B" />
         <Text style={styles.loadingText}>Loading orders...</Text>
       </View>
@@ -129,7 +90,7 @@ export default function OrderHistoryScreen() {
 
   if (error && orders.length === 0) {
     return (
-      <View style={styles.container}>
+      <View style={styles.centered}>
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={loadOrders}>
           <Text style={styles.retryButtonText}>Retry</Text>
@@ -138,89 +99,70 @@ export default function OrderHistoryScreen() {
     );
   }
 
-  if (orders.length === 0) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.emptyStateText}>No orders yet</Text>
-        <Text style={styles.emptyStateSubtext}>Your orders will appear here</Text>
-      </View>
-    );
-  }
-
-  // Table header
-  const renderHeader = () => (
-    <View style={styles.tableHeader}>
-      <Text style={[styles.columnHeader, styles.orderColumn]}>Order</Text>
-      <Text style={[styles.columnHeader, styles.statusColumn]}>Status</Text>
-      <Text style={[styles.columnHeader, styles.viewColumn]}>View</Text>
-    </View>
-  );
-
-  // Table row
-  const renderOrderRow = ({ item }: { item: Order }) => (
-    <View style={styles.tableRow}>
-      <View style={[styles.cell, styles.orderColumn]}>
-        <Text style={styles.orderIdText} numberOfLines={1}>
-          {item.orderId}
-        </Text>
-        <Text style={styles.orderDateText}>{formatOrderDate(item.createdAt)}</Text>
-      </View>
-
-      <View style={[styles.cell, styles.statusColumn]}>
-        <View
-          style={[
-            styles.statusBadge,
-            { backgroundColor: getStatusColor(item.status) },
-          ]}
-        >
-          <Text style={styles.statusBadgeText} numberOfLines={1}>
-            {capitalizeStatus(item.status)}
-          </Text>
-        </View>
-      </View>
-
-      <View style={[styles.cell, styles.viewColumn]}>
-        <TouchableOpacity
-          style={styles.viewButton}
-          onPress={() => handleViewOrder(item)}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.viewButtonIcon}>📋</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
   return (
     <View style={styles.container}>
+      <Header />
+
+      {/* Page Title */}
+      <Text style={styles.pageTitle}>MY ORDERS</Text>
+
       {/* Table Header */}
-      {renderHeader()}
+      <View style={styles.tableHeader}>
+        <Text style={[styles.columnHeader, styles.orderColumn]}>ORDER</Text>
+        <Text style={[styles.columnHeader, styles.statusColumn]}>STATUS</Text>
+        <Text style={[styles.columnHeader, styles.viewColumn]}>VIEW</Text>
+      </View>
 
       {/* Orders List */}
       <FlatList
         data={orders}
         keyExtractor={(item) => item.orderId}
-        renderItem={renderOrderRow}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor="#DA583B"
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#DA583B" />
         }
-        scrollEnabled={true}
         ListEmptyComponent={
-          <View style={styles.emptyStateContainer}>
-            <Text style={styles.emptyStateText}>No orders found</Text>
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No orders yet</Text>
+            <Text style={styles.emptySubtext}>Start by ordering from a restaurant!</Text>
           </View>
         }
+        renderItem={({ item }) => (
+          <View style={styles.tableRow}>
+            {/* Restaurant Name */}
+            <View style={[styles.cell, styles.orderColumn]}>
+              <Text style={styles.restaurantName} numberOfLines={2}>
+                {item.restaurantName}
+              </Text>
+            </View>
+
+            {/* Status */}
+            <View style={[styles.cell, styles.statusColumn]}>
+              <Text style={styles.statusText}>
+                {item.status.toUpperCase()}
+              </Text>
+            </View>
+
+            {/* View Button */}
+            <View style={[styles.cell, styles.viewColumn]}>
+              <TouchableOpacity
+                style={styles.viewButton}
+                onPress={() => handleViewOrder(item)}
+                activeOpacity={0.7}
+              >
+                <FontAwesomeIcon icon={faMagnifyingGlassPlus as any} size={16} color="#222126" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
       />
 
-      {/* Order Detail Modal */}
       <OrderHistoryDetailModal
         visible={detailModalVisible}
         order={selectedOrder}
-        onClose={handleCloseModal}
+        onClose={() => {
+          setDetailModalVisible(false);
+          setSelectedOrder(null);
+        }}
       />
     </View>
   );
@@ -229,6 +171,12 @@ export default function OrderHistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#FFFFFF',
   },
   loadingText: {
@@ -252,54 +200,39 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
   },
-  emptyStateText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#999999',
+  pageTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#222126',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
   },
-  emptyStateSubtext: {
-    fontSize: 13,
-    color: '#CCCCCC',
-    marginTop: 6,
-  },
-  emptyStateContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-
-  // Table styles
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#F5F5F5',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    borderBottomWidth: 2,
-    borderBottomColor: '#E0E0E0',
+    backgroundColor: '#DA583B',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   columnHeader: {
     fontWeight: '700',
-    fontSize: 12,
-    color: '#222126',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontSize: 13,
+    color: '#FFFFFF',
   },
   orderColumn: {
-    flex: 1.5,
+    flex: 2,
   },
   statusColumn: {
-    flex: 1,
+    flex: 1.5,
   },
   viewColumn: {
-    flex: 0.6,
+    flex: 0.8,
     alignItems: 'center',
   },
-
   tableRow: {
     flexDirection: 'row',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
     alignItems: 'center',
@@ -307,39 +240,36 @@ const styles = StyleSheet.create({
   cell: {
     justifyContent: 'center',
   },
-  orderIdText: {
-    fontSize: 13,
-    fontWeight: '600',
+  restaurantName: {
+    fontSize: 14,
+    fontWeight: '500',
     color: '#222126',
-    marginBottom: 2,
   },
-  orderDateText: {
-    fontSize: 11,
-    color: '#999999',
+  statusText: {
+    fontSize: 13,
+    color: '#222126',
+    fontWeight: '500',
   },
-
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statusBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-
   viewButton: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  viewButtonIcon: {
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyText: {
     fontSize: 16,
+    fontWeight: '600',
+    color: '#999999',
+    marginBottom: 6,
+  },
+  emptySubtext: {
+    fontSize: 13,
+    color: '#CCCCCC',
   },
 });

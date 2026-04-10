@@ -23,18 +23,14 @@ export default function LoginScreen() {
   const router = useRouter();
   const { signIn } = useAuth();
 
-  // Email validation regex
   const validateEmail = (emailText: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(emailText);
   };
 
-  // Handle login button press
   const handleLogin = async () => {
-    // Clear previous errors
     setError(null);
 
-    // Client-side validation
     if (!email.trim()) {
       setError('Email is required');
       return;
@@ -52,42 +48,39 @@ export default function LoginScreen() {
       return;
     }
 
-    // Start loading
     setLoading(true);
 
     try {
-      // Make API request to backend using API service
       const response = await authAPI.login(email.trim(), password);
+      const authData = response.data.data || response.data;
+      const { accessToken, customer_id } = authData;
 
-      // Extract token from response
-      const { token } = response.data;
-
-      if (!token) {
+      if (!accessToken) {
         setError('No authentication token received from server');
         setLoading(false);
         return;
       }
 
-      // Call signIn with email and token stored
-      await signIn(email, token);
+      if (!customer_id) {
+        setError('This account is not registered as a customer.');
+        setLoading(false);
+        return;
+      }
 
-      // Navigate to restaurants screen
+      await signIn(email, accessToken, customer_id);
       router.replace('/(tabs)/(restaurant)/index');
     } catch (err: any) {
       setLoading(false);
 
-      // Handle different error scenarios
       if (err.response) {
-        // Server responded with error status
-        const errorMessage = err.response.data?.error || 
-                            err.response.data?.message || 
-                            'Invalid email or password';
+        const errorMessage =
+          err.response.data?.error ||
+          err.response.data?.message ||
+          'Invalid email or password';
         setError(errorMessage);
       } else if (err.request) {
-        // Request made but no response
         setError('Network error. Please check your connection and try again.');
       } else {
-        // Other errors
         setError('An error occurred during login. Please try again.');
       }
     }
@@ -98,26 +91,25 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Logo Section */}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Logo */}
         <View style={styles.logoSection}>
           <Image
             source={require('@/assets/images/AppLogoV2.png')}
             style={styles.logo}
             resizeMode="contain"
           />
-          <Text style={styles.brandText}>Rocket Food Delivery</Text>
         </View>
 
-        {/* Welcome Section */}
-        <View style={styles.welcomeSection}>
+        {/* Form Card */}
+        <View style={styles.card}>
           <Text style={styles.welcomeTitle}>Welcome Back</Text>
           <Text style={styles.welcomeSubtitle}>Login to begin</Text>
-        </View>
 
-        {/* Form Section */}
-        <View style={styles.formSection}>
-          {/* Email Input */}
+          {/* Email */}
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Email</Text>
             <TextInput
@@ -130,12 +122,12 @@ export default function LoginScreen() {
               value={email}
               onChangeText={(text) => {
                 setEmail(text);
-                if (error) setError(null); // Clear error when user starts typing
+                if (error) setError(null);
               }}
             />
           </View>
 
-          {/* Password Input */}
+          {/* Password */}
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Password</Text>
             <TextInput
@@ -147,12 +139,12 @@ export default function LoginScreen() {
               value={password}
               onChangeText={(text) => {
                 setPassword(text);
-                if (error) setError(null); // Clear error when user starts typing
+                if (error) setError(null);
               }}
             />
           </View>
 
-          {/* Error Message */}
+          {/* Error */}
           {error && (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{error}</Text>
@@ -185,31 +177,32 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'flex-start',
-    paddingHorizontal: 20,
-    paddingTop: 40,
-    paddingBottom: 40,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 40,
   },
   logoSection: {
     alignItems: 'center',
-    marginBottom: 40,
-  },
-  logo: {
-    width: 80,
-    height: 80,
-    marginBottom: 12,
-  },
-  brandText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#222126',
-    textAlign: 'center',
-  },
-  welcomeSection: {
     marginBottom: 32,
   },
+  logo: {
+    width: 220,
+    height: 100,
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+  },
   welcomeTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
     color: '#222126',
     marginBottom: 4,
@@ -217,24 +210,22 @@ const styles = StyleSheet.create({
   welcomeSubtitle: {
     fontSize: 14,
     color: '#666666',
-  },
-  formSection: {
     marginBottom: 20,
   },
   inputContainer: {
     marginBottom: 16,
   },
   label: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#222126',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   input: {
     borderWidth: 1,
     borderColor: '#E0E0E0',
     borderRadius: 6,
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 12,
     fontSize: 14,
     color: '#222126',
@@ -256,10 +247,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#DA583B',
     borderRadius: 6,
     paddingVertical: 14,
-    paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
+    marginTop: 4,
   },
   loginButtonDisabled: {
     opacity: 0.7,

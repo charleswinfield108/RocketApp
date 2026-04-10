@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
+@RequestMapping("/api/v1")
 public class OrderApiController {
     private final OrderService orderService;
 
@@ -24,13 +25,13 @@ public class OrderApiController {
         this.orderService = orderService;
     }
 
-    @GetMapping("/api/orders/pending")
+    @GetMapping("/orders/pending")
     public ResponseEntity<Object> getPendingOrders() {
         List<ApiOrderDTO> dtos = orderService.getPendingOrderDTOs();
         return ResponseBuilder.buildOkResponse(dtos);
     }
 
-    @GetMapping("/api/orders")
+    @GetMapping("/orders")
     public ResponseEntity<Object> getOrders(
             @RequestParam(name = "type") String type,
             @RequestParam(name = "id") int id) {
@@ -41,35 +42,35 @@ public class OrderApiController {
         return ResponseBuilder.buildOkResponse(dtos);
     }
 
-    @PostMapping("/api/orders")
+    @PostMapping("/orders")
     public ResponseEntity<Object> createOrder(@RequestBody ApiCreateOrderDTO createOrderDTO) {
         Optional<ApiOrderDTO> created = orderService.createOrder(createOrderDTO);
         if (created.isEmpty()) throw new BadRequestException("Invalid or missing parameters");
         return ResponseBuilder.buildCreatedResponse(created.get());
     }
 
-    @PutMapping("/api/orders/{id}")
+    @PutMapping("/orders/{id}")
     public ResponseEntity<Object> updateOrder(@PathVariable int id, @RequestBody ApiUpdateOrderDTO updateDTO) {
         Optional<ApiOrderDTO> updated = orderService.updateOrderFromDTO(id, updateDTO);
         if (updated.isEmpty()) throw new ResourceNotFoundException(String.format("Order with id %d not found", id));
         return ResponseBuilder.buildOkResponse(updated.get());
     }
 
-    @DeleteMapping("/api/orders/{id}")
+    @DeleteMapping("/orders/{id}")
     public ResponseEntity<Object> deleteOrder(@PathVariable int id) {
         boolean deleted = orderService.deleteOrderIfExists(id);
         if (!deleted) throw new ResourceNotFoundException(String.format("Order with id %d not found", id));
         return ResponseBuilder.buildOkResponse(null);
     }
 
-    @PutMapping("/api/order/{id}/courier")
+    @PutMapping("/orders/{id}/courier")
     public ResponseEntity<Object> assignCourier(@PathVariable int id, @RequestBody ApiAssignCourierDTO dto) {
         Optional<ApiOrderDTO> updated = orderService.assignCourier(id, dto);
         if (updated.isEmpty()) throw new ResourceNotFoundException(String.format("Order with id %d or courier not found", id));
         return ResponseBuilder.buildOkResponse(updated.get());
     }
 
-    @PutMapping("/api/order/{id}/rating")
+    @PutMapping("/orders/{id}/rating")
     public ResponseEntity<Object> updateRating(@PathVariable int id, @RequestBody ApiUpdateRatingDTO dto) {
         Optional<ApiOrderDTO> updated = orderService.updateRating(id, dto);
         if (updated.isEmpty()) throw new ResourceNotFoundException(String.format("Order with id %d not found", id));

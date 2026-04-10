@@ -4,10 +4,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 interface AuthContextType {
   isSignedIn: boolean;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, token: string, customerId: number) => Promise<void>;
   signOut: () => Promise<void>;
-  signout: () => Promise<void>; // alias for signOut
+  signout: () => Promise<void>;
   authToken: string | null;
+  customerId: number | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,15 +17,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [authToken, setAuthToken] = useState<string | null>(null);
+  const [customerId, setCustomerId] = useState<number | null>(null);
 
-  // Check if user is already signed in on app launch
   useEffect(() => {
     const bootstrapAsync = async () => {
       try {
         const token = await AsyncStorage.getItem('authToken');
+        const storedCustomerId = await AsyncStorage.getItem('customerId');
         if (token) {
           setAuthToken(token);
           setIsSignedIn(true);
+        }
+        if (storedCustomerId) {
+          setCustomerId(parseInt(storedCustomerId, 10));
         }
       } catch (error) {
         console.error('Failed to restore auth token:', error);
@@ -36,12 +41,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     bootstrapAsync();
   }, []);
 
-  // Sign in function
-  const signIn = async (email: string, token: string) => {
+  const signIn = async (_email: string, token: string, cId: number) => {
     try {
-      // Store the JWT token from API
       await AsyncStorage.setItem('authToken', token);
+      await AsyncStorage.setItem('customerId', String(cId));
       setAuthToken(token);
+      setCustomerId(cId);
       setIsSignedIn(true);
     } catch (error) {
       console.error('Sign in failed:', error);
@@ -49,11 +54,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Sign out function
   const signOut = async () => {
     try {
       await AsyncStorage.removeItem('authToken');
+      await AsyncStorage.removeItem('customerId');
       setAuthToken(null);
+      setCustomerId(null);
       setIsSignedIn(false);
     } catch (error) {
       console.error('Sign out failed:', error);
@@ -66,8 +72,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isLoading,
     signIn,
     signOut,
-    signout: signOut, // alias for convenience
+    signout: signOut,
     authToken,
+    customerId,
   };
 
   return (
