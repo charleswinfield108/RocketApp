@@ -1,5 +1,70 @@
 # Research Notes
 
+---
+
+## Native vs Cross-Platform Mobile Applications
+
+### Native Applications
+
+A native mobile application is built specifically for one platform using the tools and programming languages that platform officially supports. iOS native apps are written in Swift or Objective-C using Apple's Xcode IDE, while Android native apps are written in Kotlin or Java using Android Studio. Because native apps are compiled directly for the target platform, they have full access to all device hardware and APIs — camera, GPS, Bluetooth, biometrics, push notifications — and deliver the best possible performance and UI fidelity.
+
+The main trade-off is cost and effort. Building a native iOS app and a native Android app means maintaining two separate codebases, two sets of developers, and two release pipelines. Any new feature must be built twice.
+
+### Cross-Platform Applications
+
+A cross-platform application is built once using a shared codebase that runs on multiple platforms. Frameworks like React Native, Flutter, and Xamarin allow developers to write shared logic and UI components that are then compiled or interpreted into platform-specific output. This significantly reduces development time and cost, since one team can target both iOS and Android simultaneously.
+
+The trade-off is that cross-platform apps may not achieve the exact same performance or native feel as a fully native app, and access to cutting-edge platform APIs is sometimes delayed until the framework adds support.
+
+### Key Differences
+
+| | Native | Cross-Platform |
+|---|---|---|
+| Language | Swift / Kotlin | JavaScript, Dart, C# |
+| Codebase | One per platform | Single shared codebase |
+| Performance | Best possible | Near-native |
+| Device API access | Full, immediate | Framework-dependent |
+| Development cost | Higher | Lower |
+| Examples | Apple Maps, Google Maps | React Native, Flutter |
+
+### Which is Used in RocketFood?
+
+RocketFood uses **React Native** — a cross-platform framework. The same TypeScript codebase runs on both iOS and Android, delivering a consistent experience across devices while keeping the project maintainable by a single development team.
+
+---
+
+## React vs React Native
+
+### React
+
+React is a JavaScript library for building user interfaces on the **web**. Created by Meta (Facebook), it uses a virtual DOM (Document Object Model) to efficiently update and render HTML elements in a browser. React components return JSX — a syntax that looks like HTML — which gets compiled into actual DOM nodes rendered by the browser.
+
+React is concerned entirely with the browser environment. Styling is done with CSS, layout follows the HTML/CSS box model, and navigation is handled by browser history and URLs.
+
+### React Native
+
+React Native is a framework that uses the same React component model and JavaScript syntax, but instead of rendering HTML to a browser, it renders **native UI components** on mobile devices. A `<View>` in React Native becomes a `UIView` on iOS and an `android.view.View` on Android. A `<Text>` component becomes a `UILabel` on iOS and a `TextView` on Android.
+
+This means React Native apps look and feel like real native apps — because under the hood, they are using real native components — while still being written in JavaScript/TypeScript.
+
+### Key Differences
+
+| | React | React Native |
+|---|---|---|
+| Target platform | Web browsers | iOS and Android |
+| Renders | HTML DOM elements | Native UI components |
+| Styling | CSS stylesheets | JavaScript `StyleSheet` API |
+| Layout | CSS Flexbox + Box Model | Flexbox (subset) |
+| Navigation | Browser history / URLs | Stack, Tab, Drawer navigators |
+| Component examples | `<div>`, `<p>`, `<img>` | `<View>`, `<Text>`, `<Image>` |
+| Runs in | Browser | Native mobile runtime (JSI/Hermes) |
+
+### What They Share
+
+Both React and React Native share the same core concepts: components, props, state, hooks (`useState`, `useEffect`), and the virtual DOM reconciliation model. A developer who knows React can learn React Native quickly — the mental model is the same, only the rendering target changes.
+
+---
+
 ## Twilio SMS Integration in a Java Spring Boot Backend
 
 ### Overview
