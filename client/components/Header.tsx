@@ -10,12 +10,8 @@ export const Header: React.FC<HeaderProps> = ({ onLogout }) => {
   const { signout } = useAuth();
 
   const handleLogout = async () => {
-    try {
-      await signout();
-      if (onLogout) onLogout();
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
+    await signout();
+    if (onLogout) onLogout();
   };
 
   return (

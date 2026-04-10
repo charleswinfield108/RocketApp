@@ -1,0 +1,313 @@
+{
+  "info": {
+    "name": "RocketFood API",
+    "_postman_id": "rocketfood-api-collection",
+    "description": "RocketFood Delivery API — Module 13. Set baseUrl variable before running. Login request auto-saves the JWT token.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+    { "key": "token",   "value": "", "type": "string" },
+    { "key": "customer_id", "value": "2",  "type": "string" },
+    { "key": "restaurant_id", "value": "1", "type": "string" },
+    { "key": "product_id", "value": "1",   "type": "string" },
+    { "key": "order_id", "value": "1",     "type": "string" },
+    { "key": "courier_id", "value": "1",   "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.accessToken) {",
+                  "  pm.collectionVariables.set('token', json.accessToken);",
+                  "}",
+                  "if (json.customer_id) {",
+                  "  pm.collectionVariables.set('customer_id', json.customer_id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer@gmail.com\",\n  \"password\": \"password\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api","v1","auth","login"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Restaurants",
+      "item": [
+        {
+          "name": "Get All Restaurants",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/restaurants", "host": ["{{baseUrl}}"], "path": ["api","v1","restaurants"] }
+          }
+        },
+        {
+          "name": "Get Restaurants — Filtered (rating + price_range)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/restaurants?rating=3&price_range=2",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","v1","restaurants"],
+              "query": [
+                { "key": "rating", "value": "3" },
+                { "key": "price_range", "value": "2" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Restaurant by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/restaurants/{{restaurant_id}}", "host": ["{{baseUrl}}"], "path": ["api","v1","restaurants","{{restaurant_id}}"] }
+          }
+        },
+        {
+          "name": "Get Restaurant Menu",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/restaurants/{{restaurant_id}}/menu", "host": ["{{baseUrl}}"], "path": ["api","v1","restaurants","{{restaurant_id}}","menu"] }
+          }
+        },
+        {
+          "name": "Get Restaurant Items",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/restaurants/{{restaurant_id}}/items", "host": ["{{baseUrl}}"], "path": ["api","v1","restaurants","{{restaurant_id}}","items"] }
+          }
+        },
+        {
+          "name": "Create Restaurant",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Restaurant\",\n  \"phone\": \"5141234567\",\n  \"email\": \"test@restaurant.com\",\n  \"price_range\": 2,\n  \"address_id\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/restaurants", "host": ["{{baseUrl}}"], "path": ["api","v1","restaurants"] }
+          }
+        },
+        {
+          "name": "Update Restaurant",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Restaurant\",\n  \"phone\": \"5141234567\",\n  \"email\": \"updated@restaurant.com\",\n  \"price_range\": 3,\n  \"address_id\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/restaurants/{{restaurant_id}}", "host": ["{{baseUrl}}"], "path": ["api","v1","restaurants","{{restaurant_id}}"] }
+          }
+        },
+        {
+          "name": "Delete Restaurant",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/v1/restaurants/{{restaurant_id}}", "host": ["{{baseUrl}}"], "path": ["api","v1","restaurants","{{restaurant_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Get All Products",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/products", "host": ["{{baseUrl}}"], "path": ["api","v1","products"] }
+          }
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/products/{{product_id}}", "host": ["{{baseUrl}}"], "path": ["api","v1","products","{{product_id}}"] }
+          }
+        },
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Burger\",\n  \"cost\": 1299,\n  \"restaurant_id\": {{restaurant_id}}\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/products", "host": ["{{baseUrl}}"], "path": ["api","v1","products"] }
+          }
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Burger\",\n  \"cost\": 1499,\n  \"restaurant_id\": {{restaurant_id}}\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/products/{{product_id}}", "host": ["{{baseUrl}}"], "path": ["api","v1","products","{{product_id}}"] }
+          }
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/v1/products/{{product_id}}", "host": ["{{baseUrl}}"], "path": ["api","v1","products","{{product_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "Get Orders by Customer",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders?type=customer&id={{customer_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","v1","orders"],
+              "query": [
+                { "key": "type", "value": "customer" },
+                { "key": "id",   "value": "{{customer_id}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Orders by Restaurant",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders?type=restaurant&id={{restaurant_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","v1","orders"],
+              "query": [
+                { "key": "type", "value": "restaurant" },
+                { "key": "id",   "value": "{{restaurant_id}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Orders by Courier",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/orders?type=courier&id={{courier_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","v1","orders"],
+              "query": [
+                { "key": "type", "value": "courier" },
+                { "key": "id",   "value": "{{courier_id}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Pending Orders",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/orders/pending", "host": ["{{baseUrl}}"], "path": ["api","v1","orders","pending"] }
+          }
+        },
+        {
+          "name": "Create Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.data && json.data.id) {",
+                  "  pm.collectionVariables.set('order_id', json.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"restaurant_id\": {{restaurant_id}},\n  \"customer_id\": {{customer_id}},\n  \"products\": [\n    { \"id\": {{product_id}}, \"quantity\": 2 }\n  ],\n  \"send_email\": false,\n  \"send_sms\": false\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/orders", "host": ["{{baseUrl}}"], "path": ["api","v1","orders"] }
+          }
+        },
+        {
+          "name": "Update Order",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"restaurant_id\": {{restaurant_id}},\n  \"customer_id\": {{customer_id}},\n  \"order_status_id\": 2,\n  \"restaurant_rating\": null\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/orders/{{order_id}}", "host": ["{{baseUrl}}"], "path": ["api","v1","orders","{{order_id}}"] }
+          }
+        },
+        {
+          "name": "Assign Courier to Order",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courier_id\": {{courier_id}}\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/orders/{{order_id}}/courier", "host": ["{{baseUrl}}"], "path": ["api","v1","orders","{{order_id}}","courier"] }
+          }
+        },
+        {
+          "name": "Update Order Rating",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"restaurant_rating\": 4\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/orders/{{order_id}}/rating", "host": ["{{baseUrl}}"], "path": ["api","v1","orders","{{order_id}}","rating"] }
+          }
+        },
+        {
+          "name": "Delete Order",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/api/v1/orders/{{order_id}}", "host": ["{{baseUrl}}"], "path": ["api","v1","orders","{{order_id}}"] }
+          }
+        }
+      ]
+    }
+  ]
+}

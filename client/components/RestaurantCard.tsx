@@ -26,8 +26,6 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
       onPress();
     } else {
       const restaurantId = String(id);
-      console.log('Navigating to restaurant:', restaurantId);
-      // Use href for simpler dynamic routing
       router.push(`/(tabs)/(restaurant)/${restaurantId}`);
     }
   };
