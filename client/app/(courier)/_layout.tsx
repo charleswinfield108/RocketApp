@@ -2,13 +2,13 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faHamburger, faHistory, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faHistory, faUser } from '@fortawesome/free-solid-svg-icons';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
-export default function TabLayout() {
+export default function CourierTabLayout() {
   const colorScheme = useColorScheme();
 
   return (
@@ -37,29 +37,15 @@ export default function TabLayout() {
         },
       }}
     >
-      {/* Restaurants Tab - with nested stack navigator */}
       <Tabs.Screen
-        name="(restaurant)"
+        name="deliveries"
         options={{
-          title: 'Restaurants',
-          tabBarIcon: ({ color }) => (
-            <FontAwesomeIcon icon={faHamburger as any} size={24} color={color} />
-          ),
-        }}
-      />
-
-      {/* Order History Tab */}
-      <Tabs.Screen
-        name="history"
-        options={{
-          title: 'OrderHistory',
+          title: 'Deliveries',
           tabBarIcon: ({ color }) => (
             <FontAwesomeIcon icon={faHistory as any} size={24} color={color} />
           ),
         }}
       />
-
-      {/* Account Tab */}
       <Tabs.Screen
         name="account"
         options={{
@@ -69,11 +55,6 @@ export default function TabLayout() {
           ),
         }}
       />
-
-      {/* Hide unused tabs */}
-      <Tabs.Screen name="profile" options={{ href: null }} />
-      <Tabs.Screen name="index" options={{ href: null }} />
-      <Tabs.Screen name="explore" options={{ href: null }} />
     </Tabs>
   );
 }
