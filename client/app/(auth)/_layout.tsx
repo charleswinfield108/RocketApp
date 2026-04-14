@@ -8,8 +8,15 @@ export default function AuthLayout() {
         animation: 'none',
       }}
     >
-      <Stack.Screen 
+      <Stack.Screen
         name="login"
+        options={{
+          headerShown: false,
+          title: '',
+        }}
+      />
+      <Stack.Screen
+        name="account-selection"
         options={{
           headerShown: false,
           title: '',
