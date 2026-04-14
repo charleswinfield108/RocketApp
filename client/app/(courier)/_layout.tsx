@@ -2,13 +2,13 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faHamburger, faHistory, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faHistory, faUser } from '@fortawesome/free-solid-svg-icons';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
-export default function TabLayout() {
+export default function CourierTabLayout() {
   const colorScheme = useColorScheme();
 
   return (
@@ -37,22 +37,11 @@ export default function TabLayout() {
         },
       }}
     >
-      {/* Restaurants Tab — nested restaurant stack */}
+      {/* Deliveries Tab — default/first tab */}
       <Tabs.Screen
-        name="(restaurant)"
+        name="deliveries"
         options={{
-          title: 'Restaurants',
-          tabBarIcon: ({ color }) => (
-            <FontAwesomeIcon icon={faHamburger as any} size={24} color={color} />
-          ),
-        }}
-      />
-
-      {/* Order History Tab */}
-      <Tabs.Screen
-        name="history"
-        options={{
-          title: 'OrderHistory',
+          title: 'Deliveries',
           tabBarIcon: ({ color }) => (
             <FontAwesomeIcon icon={faHistory as any} size={24} color={color} />
           ),
@@ -69,9 +58,6 @@ export default function TabLayout() {
           ),
         }}
       />
-
-      {/* index.tsx still exists as file — keep hidden */}
-      <Tabs.Screen name="index" options={{ href: null }} />
     </Tabs>
   );
 }
