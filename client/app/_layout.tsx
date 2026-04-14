@@ -12,18 +12,29 @@ import { AuthProvider, useAuth } from '@/services/authContext';
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
-  const { isSignedIn, isLoading } = useAuth();
+  const { isSignedIn, isLoading, customerId, courierId, activeRole } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading) {
-      if (isSignedIn) {
-        router.replace('/(tabs)/(restaurant)');
-      } else {
-        router.replace('/(auth)/login');
-      }
+    if (isLoading) return;
+
+    if (!isSignedIn) {
+      router.replace('/(auth)/login');
+      return;
     }
-  }, [isSignedIn, isLoading, router]);
+
+    const isCustomer = customerId != null;
+    const isCourier  = courierId  != null;
+    const isDualRole = isCustomer && isCourier;
+
+    if (isDualRole && activeRole === null) {
+      router.replace('/(auth)/account-selection');
+    } else if (activeRole === 'courier' || (!isCustomer && isCourier)) {
+      router.replace('/(courier)/deliveries');
+    } else {
+      router.replace('/(tabs)/(restaurant)');
+    }
+  }, [isSignedIn, isLoading, customerId, courierId, activeRole, router]);
 
   if (isLoading) {
     return (
@@ -36,8 +47,9 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)"    options={{ headerShown: false }} />
+        <Stack.Screen name="(courier)" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)"    options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="dark" backgroundColor="transparent" translucent />
     </ThemeProvider>

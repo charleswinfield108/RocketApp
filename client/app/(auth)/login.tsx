@@ -56,7 +56,7 @@ export default function LoginScreen() {
     try {
       const response = await authAPI.login(email.trim(), password);
       const authData = response.data.data || response.data;
-      const { accessToken, customer_id } = authData;
+      const { accessToken, customer_id, courier_id } = authData;
 
       if (!accessToken) {
         setError('No authentication token received from server');
@@ -64,14 +64,24 @@ export default function LoginScreen() {
         return;
       }
 
-      if (!customer_id) {
-        setError('This account is not registered as a customer.');
+      if (!customer_id && !courier_id) {
+        setError('This account is not associated with any role.');
         setLoading(false);
         return;
       }
 
-      await signIn(email, accessToken, customer_id);
-      router.replace('/(tabs)/(restaurant)/index');
+      await signIn(email, accessToken, customer_id ?? null, courier_id ?? null);
+
+      const isCustomer = customer_id != null;
+      const isCourier  = courier_id  != null;
+
+      if (isCustomer && isCourier) {
+        router.replace('/(auth)/account-selection');
+      } else if (isCustomer) {
+        router.replace('/(tabs)/(restaurant)');
+      } else {
+        router.replace('/(courier)/deliveries');
+      }
     } catch (err: any) {
       setLoading(false);
 
