@@ -22,7 +22,7 @@ export interface ApiUpdateAccountDTO {
 
 export const accountService = {
   getAccount: (userId: number) =>
-    apiClient.get<{ data: ApiAccountDTO }>(`/api/v1/account/${userId}`),
+    apiClient.get<{ data: ApiAccountDTO }>(`/api/account/${userId}`),
 
   updateAccount: (
     userId: number,
@@ -30,7 +30,7 @@ export const accountService = {
     data: ApiUpdateAccountDTO
   ) =>
     apiClient.put<{ data: ApiAccountDTO }>(
-      `/api/v1/account/${userId}?type=${type}`,
+      `/api/account/${userId}?type=${type}`,
       data
     ),
 };
