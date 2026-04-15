@@ -16,13 +16,6 @@ export default function AuthLayout() {
         name="account-selection"
         options={{ headerShown: false, title: '' }}
       />
-      <Stack.Screen
-        name="account-selection"
-        options={{
-          headerShown: false,
-          title: '',
-        }}
-      />
     </Stack>
   );
 }
