@@ -9,6 +9,10 @@ export default function AuthLayout() {
       }}
     >
       <Stack.Screen
+        name="role-selection"
+        options={{ headerShown: false, title: '' }}
+      />
+      <Stack.Screen
         name="login"
         options={{ headerShown: false, title: '' }}
       />

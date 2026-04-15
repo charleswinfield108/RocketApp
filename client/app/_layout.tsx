@@ -19,7 +19,7 @@ function RootLayoutNav() {
     if (isLoading) return;
 
     if (!isSignedIn) {
-      router.replace('/(auth)/login');
+      router.replace('/(auth)/role-selection');
       return;
     }
 
