@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faHistory, faUser } from '@fortawesome/free-solid-svg-icons';
 
@@ -10,6 +11,8 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function CourierTabLayout() {
   const colorScheme = useColorScheme();
+  const insets = useSafeAreaInsets();
+  const bottomPad = Platform.OS === 'ios' ? 28 : insets.bottom + 8;
 
   return (
     <Tabs
@@ -22,8 +25,8 @@ export default function CourierTabLayout() {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 1,
           borderTopColor: '#E0E0E0',
-          height: Platform.OS === 'ios' ? 84 : 64,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 8,
+          height: Platform.OS === 'ios' ? 84 : 56 + insets.bottom,
+          paddingBottom: bottomPad,
           paddingTop: 8,
           elevation: 8,
           shadowColor: '#000000',
