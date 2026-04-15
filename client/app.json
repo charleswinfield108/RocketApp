@@ -20,7 +20,12 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.RocketApp"
+      "package": "com.anonymous.RocketApp",
+      "config": {
+        "googleMaps": {
+          "apiKey": "$EXPO_PUBLIC_GOOGLE_MAPS_API_KEY"
+        }
+      }
     },
     "web": {
       "output": "static",
@@ -28,12 +33,6 @@
     },
     "plugins": [
       "expo-router",
-      [
-        "react-native-maps",
-        {
-          "googleMapsApiKey": "$EXPO_PUBLIC_GOOGLE_MAPS_API_KEY"
-        }
-      ],
       [
         "expo-splash-screen",
         {
