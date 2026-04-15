@@ -62,6 +62,8 @@ export const restaurantsAPI = {
 export const ordersAPI = {
   getHistory: () =>
     apiClient.get('/api/v1/orders'),
+  getPendingOrders: () =>
+    apiClient.get('/api/v1/orders/pending'),
   getCourierOrders: (courierId: number) =>
     apiClient.get(`/api/v1/orders?type=courier&id=${courierId}`),
   create: (orderData: object) =>

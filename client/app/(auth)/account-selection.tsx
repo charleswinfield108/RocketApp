@@ -41,7 +41,7 @@ export default function AccountSelectionScreen() {
           onPress={() => handleSelect('courier')}
           activeOpacity={0.8}
         >
-          <FontAwesomeIcon icon={faCar as any} size={40} color="#DA583B" />
+          <FontAwesomeIcon icon={faCar as any} size={40} color="#222126" />
           <Text style={styles.cardLabel}>Courier</Text>
         </TouchableOpacity>
       </View>
@@ -65,7 +65,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontFamily: OswaldFonts.bold,
     color: '#222126',
-    textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 48,
   },

@@ -88,12 +88,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    setIsLoading(true);
     try {
-      await AsyncStorage.removeItem('authToken');
-      await AsyncStorage.removeItem('userId');
-      await AsyncStorage.removeItem('customerId');
-      await AsyncStorage.removeItem('courierId');
-
+      await AsyncStorage.multiRemove(['authToken', 'userId', 'customerId', 'courierId']);
       setAuthToken(null);
       setUserId(null);
       setCustomerId(null);
@@ -103,6 +100,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Sign out failed:', error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 

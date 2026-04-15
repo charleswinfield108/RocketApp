@@ -24,12 +24,32 @@ export interface ApiOrderDTO {
   created_on: string;
 }
 
-export const getDeliveries = async (courierId: number): Promise<ApiOrderDTO[]> => {
-  const response = await ordersAPI.getCourierOrders(courierId);
-  const body = response.data;
+const parseOrders = (body: any): ApiOrderDTO[] => {
   if (Array.isArray(body)) return body;
   if (Array.isArray(body?.data)) return body.data;
   return [];
+};
+
+export const getDeliveries = async (courierId: number): Promise<ApiOrderDTO[]> => {
+  const [pendingRes, courierRes] = await Promise.all([
+    ordersAPI.getPendingOrders(),
+    ordersAPI.getCourierOrders(courierId),
+  ]);
+
+  const pendingOrders = parseOrders(pendingRes.data);
+  const courierOrders = parseOrders(courierRes.data);
+
+  // All PENDING orders + courier's IN PROGRESS / DELIVERED orders (no duplicates)
+  const courierNonPending = courierOrders.filter((o) => o.status !== 'pending');
+  const seen = new Set<number>();
+  const merged: ApiOrderDTO[] = [];
+  for (const order of [...pendingOrders, ...courierNonPending]) {
+    if (!seen.has(order.id)) {
+      seen.add(order.id);
+      merged.push(order);
+    }
+  }
+  return merged;
 };
 
 export const advanceOrderStatus = async (order: ApiOrderDTO): Promise<ApiOrderDTO> => {
