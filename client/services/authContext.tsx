@@ -10,7 +10,12 @@ interface AuthContextType {
   customerId: number | null;
   courierId: number | null;
   activeRole: ActiveRole;
-  signIn: (email: string, token: string, customerId: number | null, courierId: number | null) => Promise<void>;
+  signIn: (
+    email: string,
+    token: string,
+    customerId: number | null,
+    courierId: number | null
+  ) => Promise<void>;
   setActiveRole: (role: 'customer' | 'courier') => void;
   signOut: () => Promise<void>;
   signout: () => Promise<void>;
@@ -19,29 +24,32 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isSignedIn, setIsSignedIn]   = useState(false);
-  const [isLoading, setIsLoading]     = useState(true);
-  const [authToken, setAuthToken]     = useState<string | null>(null);
-  const [customerId, setCustomerId]   = useState<number | null>(null);
-  const [courierId, setCourierId]     = useState<number | null>(null);
-  // activeRole is session-only — never written to AsyncStorage
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [authToken, setAuthToken] = useState<string | null>(null);
+  const [customerId, setCustomerId] = useState<number | null>(null);
+  const [courierId, setCourierId] = useState<number | null>(null);
   const [activeRole, setActiveRoleState] = useState<ActiveRole>(null);
 
   useEffect(() => {
     const bootstrapAsync = async () => {
       try {
-        const token             = await AsyncStorage.getItem('authToken');
-        const storedCustomerId  = await AsyncStorage.getItem('customerId');
-        const storedCourierId   = await AsyncStorage.getItem('courierId');
+        const token = await AsyncStorage.getItem('authToken');
+        const storedCustomerId = await AsyncStorage.getItem('customerId');
+        const storedCourierId = await AsyncStorage.getItem('courierId');
 
         if (token) {
           setAuthToken(token);
           setIsSignedIn(true);
         }
-        if (storedCustomerId) setCustomerId(parseInt(storedCustomerId, 10));
-        if (storedCourierId)  setCourierId(parseInt(storedCourierId, 10));
+        if (storedCustomerId) {
+          setCustomerId(parseInt(storedCustomerId, 10));
+        }
+        if (storedCourierId) {
+          setCourierId(parseInt(storedCourierId, 10));
+        }
       } catch (error) {
-        console.error('Failed to restore auth token:', error);
+        console.error('Failed to restore auth state:', error);
       } finally {
         setIsLoading(false);
       }
@@ -54,15 +62,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     _email: string,
     token: string,
     cId: number | null,
-    couId: number | null,
+    dId: number | null
   ) => {
     try {
       await AsyncStorage.setItem('authToken', token);
-      if (cId != null)  await AsyncStorage.setItem('customerId', String(cId));
-      if (couId != null) await AsyncStorage.setItem('courierId', String(couId));
+      if (cId !== null) await AsyncStorage.setItem('customerId', String(cId));
+      if (dId !== null) await AsyncStorage.setItem('courierId', String(dId));
+
       setAuthToken(token);
       setCustomerId(cId);
-      setCourierId(couId);
+      setCourierId(dId);
       setIsSignedIn(true);
     } catch (error) {
       console.error('Sign in failed:', error);
@@ -70,11 +79,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const setActiveRole = (role: 'customer' | 'courier') => {
+    setActiveRoleState(role);
+  };
+
   const signOut = async () => {
     try {
       await AsyncStorage.removeItem('authToken');
       await AsyncStorage.removeItem('customerId');
       await AsyncStorage.removeItem('courierId');
+
       setAuthToken(null);
       setCustomerId(null);
       setCourierId(null);
@@ -84,10 +98,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error('Sign out failed:', error);
       throw error;
     }
-  };
-
-  const setActiveRole = (role: 'customer' | 'courier') => {
-    setActiveRoleState(role);
   };
 
   const value: AuthContextType = {

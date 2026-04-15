@@ -19,7 +19,6 @@ export default function AccountSelectionScreen() {
   const insets = useSafeAreaInsets();
 
   const handleSelect = (role: 'customer' | 'courier') => {
-    // Role must be set before navigating
     setActiveRole(role);
     router.replace(
       role === 'customer' ? '/(tabs)/(restaurant)' : '/(courier)/deliveries'

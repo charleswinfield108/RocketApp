@@ -62,8 +62,17 @@ export const restaurantsAPI = {
 export const ordersAPI = {
   getHistory: () =>
     apiClient.get('/api/v1/orders'),
-  create: (orderData: any) =>
+  getCourierOrders: (courierId: number) =>
+    apiClient.get(`/api/v1/orders?type=courier&id=${courierId}`),
+  create: (orderData: object) =>
     apiClient.post('/api/v1/orders', orderData),
   getById: (id: number | string) =>
     apiClient.get(`/api/v1/orders/${id}`),
+  update: (id: number | string, dto: {
+    restaurant_id: number;
+    customer_id: number;
+    order_status_id: number;
+    restaurant_rating: number | null;
+  }) =>
+    apiClient.put(`/api/v1/orders/${id}`, dto),
 };

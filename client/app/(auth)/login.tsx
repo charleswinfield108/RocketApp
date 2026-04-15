@@ -73,7 +73,7 @@ export default function LoginScreen() {
       await signIn(email, accessToken, customer_id ?? null, courier_id ?? null);
 
       const isCustomer = customer_id != null;
-      const isCourier  = courier_id  != null;
+      const isCourier = courier_id != null;
 
       if (isCustomer && isCourier) {
         router.replace('/(auth)/account-selection');

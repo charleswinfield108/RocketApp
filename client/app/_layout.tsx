@@ -23,8 +23,8 @@ function RootLayoutNav() {
       return;
     }
 
-    const isCustomer = customerId != null;
-    const isCourier  = courierId  != null;
+    const isCustomer = customerId !== null;
+    const isCourier = courierId !== null;
     const isDualRole = isCustomer && isCourier;
 
     if (isDualRole && activeRole === null) {
@@ -47,9 +47,9 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name="(tabs)"    options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="(courier)" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)"    options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="dark" backgroundColor="transparent" translucent />
     </ThemeProvider>
