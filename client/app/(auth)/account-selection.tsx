@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faUser, faCar } from '@fortawesome/free-solid-svg-icons';
@@ -32,9 +26,7 @@ export default function AccountSelectionScreen() {
         style={styles.logo}
         resizeMode="contain"
       />
-
       <Text style={styles.title}>Select Account Type</Text>
-
       <View style={styles.cardsRow}>
         <TouchableOpacity
           style={styles.card}
@@ -44,7 +36,6 @@ export default function AccountSelectionScreen() {
           <FontAwesomeIcon icon={faUser as any} size={40} color="#DA583B" />
           <Text style={styles.cardLabel}>Customer</Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={styles.card}
           onPress={() => handleSelect('courier')}

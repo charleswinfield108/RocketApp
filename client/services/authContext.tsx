@@ -7,12 +7,14 @@ interface AuthContextType {
   isSignedIn: boolean;
   isLoading: boolean;
   authToken: string | null;
+  userId: number | null;
   customerId: number | null;
   courierId: number | null;
   activeRole: ActiveRole;
   signIn: (
     email: string,
     token: string,
+    userId: number | null,
     customerId: number | null,
     courierId: number | null
   ) => Promise<void>;
@@ -27,6 +29,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [authToken, setAuthToken] = useState<string | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
   const [customerId, setCustomerId] = useState<number | null>(null);
   const [courierId, setCourierId] = useState<number | null>(null);
   const [activeRole, setActiveRoleState] = useState<ActiveRole>(null);
@@ -35,6 +38,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const bootstrapAsync = async () => {
       try {
         const token = await AsyncStorage.getItem('authToken');
+        const storedUserId = await AsyncStorage.getItem('userId');
         const storedCustomerId = await AsyncStorage.getItem('customerId');
         const storedCourierId = await AsyncStorage.getItem('courierId');
 
@@ -42,12 +46,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setAuthToken(token);
           setIsSignedIn(true);
         }
-        if (storedCustomerId) {
-          setCustomerId(parseInt(storedCustomerId, 10));
-        }
-        if (storedCourierId) {
-          setCourierId(parseInt(storedCourierId, 10));
-        }
+        if (storedUserId) setUserId(parseInt(storedUserId, 10));
+        if (storedCustomerId) setCustomerId(parseInt(storedCustomerId, 10));
+        if (storedCourierId) setCourierId(parseInt(storedCourierId, 10));
       } catch (error) {
         console.error('Failed to restore auth state:', error);
       } finally {
@@ -61,15 +62,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signIn = async (
     _email: string,
     token: string,
+    uId: number | null,
     cId: number | null,
     dId: number | null
   ) => {
     try {
       await AsyncStorage.setItem('authToken', token);
+      if (uId !== null) await AsyncStorage.setItem('userId', String(uId));
       if (cId !== null) await AsyncStorage.setItem('customerId', String(cId));
       if (dId !== null) await AsyncStorage.setItem('courierId', String(dId));
 
       setAuthToken(token);
+      setUserId(uId);
       setCustomerId(cId);
       setCourierId(dId);
       setIsSignedIn(true);
@@ -86,10 +90,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     try {
       await AsyncStorage.removeItem('authToken');
+      await AsyncStorage.removeItem('userId');
       await AsyncStorage.removeItem('customerId');
       await AsyncStorage.removeItem('courierId');
 
       setAuthToken(null);
+      setUserId(null);
       setCustomerId(null);
       setCourierId(null);
       setActiveRoleState(null);
@@ -104,6 +110,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isSignedIn,
     isLoading,
     authToken,
+    userId,
     customerId,
     courierId,
     activeRole,

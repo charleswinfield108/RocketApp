@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faHamburger, faHistory } from '@fortawesome/free-solid-svg-icons';
+import { faHamburger, faHistory, faUser } from '@fortawesome/free-solid-svg-icons';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { Colors } from '@/constants/theme';
@@ -55,6 +55,17 @@ export default function TabLayout() {
           title: 'OrderHistory',
           tabBarIcon: ({ color }) => (
             <FontAwesomeIcon icon={faHistory as any} size={24} color={color} />
+          ),
+        }}
+      />
+
+      {/* Account Tab */}
+      <Tabs.Screen
+        name="account"
+        options={{
+          title: 'Account',
+          tabBarIcon: ({ color }) => (
+            <FontAwesomeIcon icon={faUser as any} size={24} color={color} />
           ),
         }}
       />

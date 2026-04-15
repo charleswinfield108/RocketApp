@@ -10,10 +10,11 @@ export default function AuthLayout() {
     >
       <Stack.Screen
         name="login"
-        options={{
-          headerShown: false,
-          title: '',
-        }}
+        options={{ headerShown: false, title: '' }}
+      />
+      <Stack.Screen
+        name="account-selection"
+        options={{ headerShown: false, title: '' }}
       />
       <Stack.Screen
         name="account-selection"

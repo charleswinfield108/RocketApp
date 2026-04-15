@@ -56,7 +56,7 @@ export default function LoginScreen() {
     try {
       const response = await authAPI.login(email.trim(), password);
       const authData = response.data.data || response.data;
-      const { accessToken, customer_id, courier_id } = authData;
+      const { accessToken, user_id, customer_id, courier_id } = authData;
 
       if (!accessToken) {
         setError('No authentication token received from server');
@@ -70,7 +70,7 @@ export default function LoginScreen() {
         return;
       }
 
-      await signIn(email, accessToken, customer_id ?? null, courier_id ?? null);
+      await signIn(email, accessToken, user_id ?? null, customer_id ?? null, courier_id ?? null);
 
       const isCustomer = customer_id != null;
       const isCourier = courier_id != null;
