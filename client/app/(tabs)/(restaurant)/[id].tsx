@@ -99,7 +99,7 @@ export default function RestaurantDetailScreen() {
     return sum + (item ? item.price * quantity : 0);
   }, 0);
 
-  const handleConfirmOrder = async () => {
+  const handleConfirmOrder = async (sendEmail: boolean, sendSms: boolean) => {
     const orderItems = Object.entries(cart)
       .filter(([, quantity]) => quantity > 0)
       .map(([itemId, quantity]) => ({ menuItemId: itemId, quantity }));
@@ -110,6 +110,8 @@ export default function RestaurantDetailScreen() {
       restaurant_id: currentRestaurantId,
       customer_id: customerId,
       products: orderItems.map((i) => ({ id: parseInt(i.menuItemId, 10), quantity: i.quantity })),
+      send_email: sendEmail,
+      send_sms: sendSms,
     });
 
     if (response.status !== 201 && response.status !== 200) {
