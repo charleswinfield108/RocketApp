@@ -1,12 +1,14 @@
 import { View, StyleSheet } from 'react-native';
 import { useAuth } from '@/services/authContext';
 import AccountForm from '@/components/AccountForm';
+import { Header } from '@/components/Header';
 
 export default function CustomerAccountScreen() {
   const { userId } = useAuth();
 
   return (
     <View style={styles.container}>
+      <Header />
       <AccountForm role="customer" userId={userId!} />
     </View>
   );
