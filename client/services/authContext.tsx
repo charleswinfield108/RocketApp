@@ -20,7 +20,6 @@ interface AuthContextType {
   ) => Promise<void>;
   setActiveRole: (role: 'customer' | 'courier') => void;
   signOut: () => Promise<void>;
-  signout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -116,7 +115,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     signIn,
     setActiveRole,
     signOut,
-    signout: signOut,
   };
 
   return (

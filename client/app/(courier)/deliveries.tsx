@@ -7,16 +7,17 @@ import {
   Modal,
   ActivityIndicator,
   StyleSheet,
-  SafeAreaView,
-  Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '@/services/authContext';
 import { getDeliveries, advanceOrderStatus, ApiOrderDTO } from '@/services/courierService';
 import StatusBadge from '@/components/StatusBadge';
+import { Header } from '@/components/Header';
 import { OswaldFonts } from '@/constants/theme';
+import { formatDate } from '@/utils/formatters';
 
 export default function CourierDeliveriesScreen() {
   const { courierId } = useAuth();
@@ -83,14 +84,6 @@ export default function CourierDeliveriesScreen() {
     }
   };
 
-  const formatDate = (dateStr: string): string => {
-    const date = new Date(dateStr);
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const dd = String(date.getDate()).padStart(2, '0');
-    return `${yyyy}/${mm}/${dd}`;
-  };
-
   const formatCents = (cents: number): string =>
     (cents / 100).toFixed(2);
 
@@ -116,8 +109,9 @@ export default function CourierDeliveriesScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      {/* ─── Header ─────────────────────────────────────────────────────── */}
+    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+      <Header />
+      {/* ─── Page Title ─────────────────────────────────────────────────── */}
       <View style={styles.header}>
         <Text style={styles.heading}>MY DELIVERIES</Text>
       </View>
@@ -285,7 +279,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? 16 : 8,
+    paddingTop: 12,
     paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { getStars, getPriceDisplay, getInitials } from '@/utils/formatters';
 
 interface RestaurantCardProps {
   id: number | string;
@@ -30,20 +31,6 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
     }
   };
 
-  const getStarDisplay = (r: number) => '★'.repeat(Math.round(r)) + '☆'.repeat(5 - Math.round(r));
-
-  const getPriceDisplay = (p: number) => '$'.repeat(p);
-
-  // Get initials from restaurant name
-  const getInitials = () => {
-    const words = name.split(' ');
-    return words
-      .slice(0, 2)
-      .map((w) => w[0])
-      .join('')
-      .toUpperCase();
-  };
-
   // Get a consistent color based on ID
   const getPlaceholderColor = () => {
     const colors = ['#DA583B', '#609475', '#222126', '#851919', '#F0CB67', '#DA583B'];
@@ -65,7 +52,7 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
         />
       ) : (
         <View style={[styles.image, styles.imagePlaceholder, { backgroundColor: getPlaceholderColor() }]}>
-          <Text style={styles.placeholderText}>{getInitials()}</Text>
+          <Text style={styles.placeholderText}>{getInitials(name)}</Text>
         </View>
       )}
 
@@ -78,7 +65,7 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
 
         {/* Stars */}
         <Text style={styles.rating}>
-          {getStarDisplay(rating)}
+          {getStars(rating)}
         </Text>
       </View>
     </TouchableOpacity>

@@ -15,7 +15,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/services/authContext';
 import { authAPI } from '@/services/api';
-import { OswaldFonts } from '@/constants/theme';
+import { OswaldFonts, ArialFont } from '@/constants/theme';
+import { EMAIL_REGEX } from '@/utils/validators';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -26,10 +27,8 @@ export default function LoginScreen() {
   const { signIn } = useAuth();
   const insets = useSafeAreaInsets();
 
-  const validateEmail = (emailText: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(emailText);
-  };
+  const validateEmail = (emailText: string): boolean =>
+    EMAIL_REGEX.test(emailText);
 
   const handleLogin = async () => {
     setError(null);
@@ -222,6 +221,7 @@ const styles = StyleSheet.create({
   },
   welcomeSubtitle: {
     fontSize: 14,
+    fontFamily: ArialFont,
     color: '#666666',
     marginBottom: 20,
   },
@@ -230,6 +230,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 13,
+    fontFamily: ArialFont,
     fontWeight: '600',
     color: '#222126',
     marginBottom: 6,

@@ -55,7 +55,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="history"
         options={{
-          title: 'OrderHistory',
+          title: 'Order History',
           tabBarIcon: ({ color }) => (
             <FontAwesomeIcon icon={faHistory as any} size={24} color={color} />
           ),
@@ -73,10 +73,6 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Hide unused tabs */}
-      <Tabs.Screen name="profile" options={{ href: null }} />
-      <Tabs.Screen name="index" options={{ href: null }} />
-      <Tabs.Screen name="explore" options={{ href: null }} />
     </Tabs>
   );
 }

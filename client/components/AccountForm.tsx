@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { accountService, ApiAccountDTO } from '@/services/accountService';
-import { OswaldFonts } from '@/constants/theme';
+import { OswaldFonts, ArialFont } from '@/constants/theme';
+import { EMAIL_REGEX } from '@/utils/validators';
 
 interface AccountFormProps {
   role: 'customer' | 'courier';
@@ -36,8 +37,6 @@ const LABELS = {
   },
 };
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 export default function AccountForm({ role, userId }: AccountFormProps) {
   const insets = useSafeAreaInsets();
   const labels = LABELS[role];
@@ -45,6 +44,9 @@ export default function AccountForm({ role, userId }: AccountFormProps) {
   const [primaryEmail, setPrimaryEmail] = useState('');
   const [roleEmail, setRoleEmail] = useState('');
   const [rolePhone, setRolePhone] = useState('');
+
+  // fetchLoading/fetchError cover the initial GET; submitLoading/submitError/
+  // submitSuccess cover the update POST; validationError is client-side only.
   const [fetchLoading, setFetchLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -65,7 +67,7 @@ export default function AccountForm({ role, userId }: AccountFormProps) {
     setFetchLoading(true);
     setFetchError(null);
     try {
-      const response = await accountService.getAccount(userId);
+      const response = await accountService.getAccount(userId, role);
       const account = response.data?.data ?? (response.data as unknown as ApiAccountDTO);
       populateFields(account);
     } catch {
@@ -95,7 +97,7 @@ export default function AccountForm({ role, userId }: AccountFormProps) {
 
     setSubmitLoading(true);
     try {
-      const response = await accountService.updateAccount(userId, role, {
+      const response = await accountService.updateAccount(userId, {
         email: roleEmail.trim(),
         phone: rolePhone.trim(),
       });
@@ -254,6 +256,7 @@ const styles = StyleSheet.create({
   },
   subheading: {
     fontSize: 14,
+    fontFamily: ArialFont,
     color: '#666666',
     marginBottom: 28,
   },
@@ -282,6 +285,7 @@ const styles = StyleSheet.create({
   },
   helperText: {
     fontSize: 11,
+    fontFamily: ArialFont,
     color: '#999999',
     marginTop: 4,
   },
@@ -296,10 +300,12 @@ const styles = StyleSheet.create({
   },
   feedbackError: {
     fontSize: 13,
+    fontFamily: ArialFont,
     color: '#851919',
   },
   feedbackSuccess: {
     fontSize: 13,
+    fontFamily: ArialFont,
     color: '#1A6633',
   },
   updateBtn: {

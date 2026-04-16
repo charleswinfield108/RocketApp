@@ -33,7 +33,8 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized - could refresh token or logout
+      // Token is expired or invalid. The auth guard in _layout.tsx will redirect
+      // to login once AuthContext detects the signed-out state; no action needed here.
       console.error('Unauthorized access - token may be expired');
     }
     return Promise.reject(error);

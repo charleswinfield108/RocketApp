@@ -7,6 +7,7 @@ import {
   getCoordinatesForRestaurant,
   MONTREAL_REGION,
 } from '@/constants/restaurantCoordinates';
+import { getStars, getPriceDisplay } from '@/utils/formatters';
 
 interface Restaurant {
   id: number;
@@ -22,11 +23,6 @@ interface RestaurantMapProps {
 export default function RestaurantMap({ restaurants }: RestaurantMapProps) {
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
-
-  const getStars = (rating: number) =>
-    '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating));
-
-  const getPriceDisplay = (priceRange: number) => '$'.repeat(priceRange);
 
   return (
     <View style={styles.container}>

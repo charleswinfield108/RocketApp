@@ -43,7 +43,7 @@ export default function CourierTabLayout() {
       <Tabs.Screen
         name="deliveries"
         options={{
-          title: 'Deliveries',
+          title: 'Order Delivery',
           tabBarIcon: ({ color }) => (
             <FontAwesomeIcon icon={faHistory as any} size={24} color={color} />
           ),

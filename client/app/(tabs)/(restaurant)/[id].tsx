@@ -9,12 +9,13 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { OswaldFonts } from '@/constants/theme';
-import { MenuItemComponent, MenuItem } from '../../../components/MenuItem';
-import { ConfirmationModal } from '../../../components/ConfirmationModal';
-import { Header } from '../../../components/Header';
-import { useAuth } from '../../../services/authContext';
-import menuAPI from '../../../services/menuService';
-import { restaurantsAPI, ordersAPI } from '../../../services/api';
+import { MenuItemComponent, MenuItem } from '@/components/MenuItem';
+import { ConfirmationModal } from '@/components/ConfirmationModal';
+import { Header } from '@/components/Header';
+import { useAuth } from '@/services/authContext';
+import menuAPI from '@/services/menuService';
+import { restaurantsAPI, ordersAPI } from '@/services/api';
+import { getStars, getPriceDisplay } from '@/utils/formatters';
 
 interface RestaurantInfo {
   id: number;
@@ -82,6 +83,8 @@ export default function RestaurantDetailScreen() {
     loadMenu();
   }, [loadMenu]);
 
+  // Clear the cart whenever the screen comes back into focus so stale
+  // quantities from a previous visit don't persist after navigating away.
   useFocusEffect(
     useCallback(() => {
       resetCart();
@@ -110,8 +113,8 @@ export default function RestaurantDetailScreen() {
       restaurant_id: currentRestaurantId,
       customer_id: customerId,
       products: orderItems.map((i) => ({ id: parseInt(i.menuItemId, 10), quantity: i.quantity })),
-      send_email: sendEmail,
-      send_sms: sendSms,
+      sendEmail: sendEmail,
+      sendSMS: sendSms,
     });
 
     if (response.status !== 201 && response.status !== 200) {
@@ -120,11 +123,6 @@ export default function RestaurantDetailScreen() {
 
     resetCart();
   };
-
-  const getStars = (rating: number) =>
-    '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating));
-
-  const getPriceDisplay = (priceRange: number) => '$'.repeat(priceRange);
 
   if (loading) {
     return (
