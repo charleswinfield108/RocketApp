@@ -2,98 +2,101 @@
 
 ---
 
-## Concept 1: WSL2 Network Configuration for Physical Device Testing
+## Concept 1: Account Selection Screen for Dual-Role Users
 
 ### Purpose in the Project
-To run and test the React Native app on a physical iPhone using Expo Go, the
-development server running inside WSL2 needed to be reachable from the phone
-over the local Wi-Fi network.
+RocketApp supports users who hold both a customer role and a courier role under
+the same login. When such a user signs in, the app cannot automatically enter
+either tab layout — it must first ask which role the user wants to act as for
+this session. The account selection screen handles that decision and stores the
+active role in React context so the rest of the app can respond accordingly.
 
 ### Why It Was Challenging
-WSL2 (Windows Subsystem for Linux) runs inside a virtualised network with its
-own internal IP address (e.g., 192.168.86.x). When Expo starts, the QR code it
-generates contains that WSL2 IP — but the phone has no route to it. The phone
-can only reach the Windows host's Wi-Fi IP (e.g., 192.168.1.5).
+The challenge was managing a three-way authentication state: customer-only,
+courier-only, and dual-role. The auth guard in `_layout.tsx` runs a `useEffect`
+that reads `customerId`, `courierId`, and `activeRole` from context every time
+any of those values change. Getting the branching logic right — including the
+`isDualRole && activeRole === null` condition that triggers the selection screen —
+required careful reasoning about which state combinations were valid and in what
+order they could arrive.
 
-Additionally, Expo's built-in `--tunnel` flag (which normally solves this via
-ngrok) is broken with ngrok v3 due to an API format change, producing the error:
-`Cannot read properties of undefined (reading 'body')`.
-
-The solution required three steps:
-1. Adding a Windows Firewall inbound rule to allow traffic on port 8081.
-2. Setting up a Windows port proxy (`netsh portproxy`) to forward
-   192.168.1.5:8081 → WSL2 IP:8081.
-3. Starting Expo with the environment variable
-   `REACT_NATIVE_PACKAGER_HOSTNAME=192.168.1.5` so the QR code contains the
-   correct Windows Wi-Fi IP that the phone can actually reach.
+A second challenge was navigation: the selection screen uses `router.replace()`
+so it is removed from the navigation stack after the user picks a role, making
+it impossible to navigate back to it during a session.
 
 ### Usage Location
-- `README.md` — "Running on a Physical Device from WSL2" section
-- `client/.env` — `EXPO_PUBLIC_API_URL` pointing to the server
-- Terminal command: `REACT_NATIVE_PACKAGER_HOSTNAME=192.168.1.5 npx expo start`
+- `client/app/(auth)/account-selection.tsx` — the selection screen UI
+- `client/services/authContext.tsx` — `activeRole` state, `setActiveRole()` method
+- `client/app/_layout.tsx` — lines 27–37, the tri-branch auth guard logic
 
 ---
 
-## Concept 2: Filtering with Human-Readable Labels vs. Numeric Data Values
+## Concept 2: Account Management Screens with Role-Specific API Endpoints
 
 ### Purpose in the Project
-The restaurant list screen allows users to filter restaurants by star rating
-and price range using dropdown menus. The dropdowns display symbols (★★★★ 4+,
-$$) while the underlying API data uses plain integers (rating: 4, price_range: 2).
+Both customers and couriers can view and update their contact details (email and
+phone number) from their respective Account tabs. The primary login email is
+displayed read-only; only the role-specific email and phone are editable. All
+changes persist to the database via REST API calls.
 
 ### Why It Was Challenging
-Two separate problems had to be solved together:
+Two distinct challenges arose here.
 
-**Problem 1 — Label alignment:** The initial implementation had the star count
-inverted — "★ 4+" showed one star for a four-star filter, and "★★★ 2+" showed
-three stars for a two-star filter. The display symbols did not match the numeric
-values they represented, which was confusing. The fix was to ensure the number
-of star characters always matched the filter value (★★★★ for 4, ★★★ for 3, etc.)
+**First — API endpoint design:** The GET and POST endpoints follow opposite
+conventions. The GET request includes the user type as a query parameter
+(`GET /api/account/{id}?type={user_type}`) so the server knows which
+role-specific record to fetch. The POST/PUT request omits the query parameter
+(`PUT /api/account/{id}`) because the request body contains the full update
+payload. Getting these backwards caused silent failures that were hard to
+diagnose.
 
-**Problem 2 — Filter operator:** Rating and price use different comparison
-operators for a reason. Rating uses `>=` (greater than or equal) because the
-user selecting "3 stars" wants to see all restaurants rated 3 or higher — it is
-a minimum threshold. Price uses `===` (strict equality) because price range is
-a category — selecting "$$" should show only $$ restaurants, not $$$ as well.
-Getting this logic wrong produced incorrect filter results.
+**Second — Component reuse:** Rather than writing two separate account screens
+for customer and courier, a single `AccountForm` component accepts a `role` prop
+(`'customer' | 'courier'`). It uses that prop to select the correct field labels,
+pass the type to the GET request, and read the right nested object
+(`account.customer` vs `account.courier`) from the API response. This pattern
+avoids duplication but requires careful prop-driven branching throughout the
+component.
 
 ### Usage Location
-- `client/components/FilterBar.tsx` — lines 22–47 (ratingOptions, priceOptions,
-  getRatingLabel, getPriceLabel)
-- `client/app/(tabs)/(restaurant)/index.tsx` — lines 64–78 (filter useEffect,
-  `r.rating >= selectedRating` vs `r.price_range === selectedPrice`)
+- `client/components/AccountForm.tsx` — the shared form component; role prop
+  drives labels, GET type param, and response field selection
+- `client/services/accountService.ts` — `getAccount(userId, type)` and
+  `updateAccount(userId, data)` with the correct endpoint shapes
+- `client/app/(tabs)/account.tsx` — customer entry point (`role="customer"`)
+- `client/app/(courier)/account.tsx` — courier entry point (`role="courier"`)
 
 ---
 
-## Concept 3: Expo Router File-Based Navigation with Authentication Guard
+## Concept 3: Order Confirmation Modal with Multi-State UI and Notification Preferences
 
 ### Purpose in the Project
-Expo Router handles all navigation in the app. It also serves as the security
-layer — preventing unauthenticated users from accessing protected screens and
-automatically redirecting to login when a session expires.
+Before placing an order, the customer sees a confirmation modal that summarises
+the items and total. The modal also lets the user opt in to receive their order
+confirmation by email and/or SMS using checkboxes. On confirm, the modal manages
+a processing state, shows a success or error result, and then auto-closes.
 
 ### Why It Was Challenging
-Coming from no prior Expo Router experience, several concepts were new:
+Two problems made this more complex than a typical confirmation dialog.
 
-**File-based routing:** Each file in the `app/` folder is automatically a route.
-Parenthesised folders like `(auth)` and `(tabs)` are route groups — they
-organise files without appearing in the URL path.
+**First — Multi-state UI management:** The modal moves through four states:
+`idle` → `processing` → `success` or `error`. Each state changes which UI
+elements are visible (buttons, spinner, success tick, error message) and which
+are interactive. A separate challenge was that the parent component clears the
+cart immediately after the API call, which would blank out the order summary
+mid-display. The fix was to snapshot the cart contents at the moment the user
+presses Confirm, so the summary stays populated during processing and on the
+success screen.
 
-**replace vs push:** Navigation uses `router.replace()` instead of
-`router.push()`. Push adds a screen to the stack, meaning the user could press
-back to return to the previous screen. Replace swaps the screen entirely,
-removing the previous one from the stack. This is essential for auth flows —
-after login, the user must not be able to press back to the login screen.
-
-**The isLoading gate:** The auth guard in `_layout.tsx` uses two state values —
-`isSignedIn` and `isLoading`. isLoading starts as `true` to prevent any redirect
-from firing before AsyncStorage has finished reading the saved token. Without
-this gate, the app would redirect to login on every launch even when a valid
-session exists, because isSignedIn would still be false at the moment the
-useEffect first runs.
+**Second — Notification parameter naming:** The order POST body must include two
+boolean fields named exactly `sendEmail` and `sendSMS` (camelCase, with SMS in
+all caps). Using snake_case (`send_email`, `send_sms`) or inconsistent casing
+caused the server to silently ignore the fields. The checkbox state flows from
+the modal's internal state → `onConfirm` callback → `handleConfirmOrder` in the
+screen → the API request body.
 
 ### Usage Location
-- `client/app/_layout.tsx` — lines 15–26 (isSignedIn, isLoading, router.replace,
-  useEffect dependency array)
-- `client/services/authContext.tsx` — signIn, signOut, isLoading initialisation
-- `client/app/(auth)/login.tsx` — login flow calling signIn from context
+- `client/components/ConfirmationModal.tsx` — modal states, snapshot pattern
+  (line 41), checkbox UI (lines 141–178), `onConfirm(sendEmail, sendSms)` call
+- `client/app/(tabs)/(restaurant)/[id].tsx` — `handleConfirmOrder` function
+  (lines 103–123); builds the POST body with `sendEmail` and `sendSMS`
