@@ -2,10 +2,11 @@ import { ordersAPI } from './api';
 import { NEXT_STATUS_ID } from '@/constants/orderStatus';
 
 export interface ApiOrderProductDTO {
-  id: number;
-  name: string;
+  product_id: number;
+  product_name: string;
   quantity: number;
   unit_cost: number;
+  total_cost: number;
 }
 
 export interface ApiOrderDTO {
@@ -49,12 +50,16 @@ export const getDeliveries = async (courierId: number): Promise<ApiOrderDTO[]> =
       merged.push(order);
     }
   }
-  return merged;
+  return merged.sort((a, b) => b.id - a.id);
 };
 
-export const advanceOrderStatus = async (order: ApiOrderDTO): Promise<ApiOrderDTO> => {
+export const advanceOrderStatus = async (order: ApiOrderDTO, courierId: number): Promise<ApiOrderDTO> => {
   const nextId = NEXT_STATUS_ID[order.status];
   if (!nextId) throw new Error('Order is already delivered');
+
+  if (order.status === 'pending') {
+    await ordersAPI.assignCourier(order.id, courierId);
+  }
 
   const response = await ordersAPI.update(order.id, {
     restaurant_id: order.restaurant_id,

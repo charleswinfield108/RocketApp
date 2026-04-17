@@ -51,6 +51,9 @@ public class NotificationService {
     @Value("${notify.language:en}")
     private String notifyLanguage;
 
+    @Value("${notify.channel-id:rocket-food-smtp}")
+    private String notifyChannelId;
+
     private final RestTemplate restTemplate = new RestTemplate();
 
     @PostConstruct
@@ -115,7 +118,7 @@ public class NotificationService {
                 + "    \"order_total_cost\": \"" + totalCost + "\""
                 + "  },"
                 + "  \"transport\": [{"
-                + "    \"type\": \"SMTP\","
+                + "    \"type\": \"" + notifyChannelId + "\","
                 + "    \"recipients\": {"
                 + "      \"to\": [{"
                 + "        \"name\": \"" + customerName + "\","
@@ -133,8 +136,8 @@ public class NotificationService {
             headers.set("X-SecretKey", notifySecretKey);
 
             HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
-            restTemplate.postForEntity(notifyApiUrl, request, String.class);
-            logger.info("Email sent via Notify.eu to {} for order {}", email, order.getId());
+            var response = restTemplate.postForEntity(notifyApiUrl, request, String.class);
+            logger.info("Email sent via Notify.eu to {} for order {}. Response: {}", email, order.getId(), response.getBody());
         } catch (Exception e) {
             logger.error("Email failed for order {}: {}", order.getId(), e.getMessage());
         }

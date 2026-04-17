@@ -78,4 +78,6 @@ export const ordersAPI = {
     restaurant_rating: number | null;
   }) =>
     apiClient.put(`/api/v1/orders/${id}`, dto),
+  assignCourier: (orderId: number | string, courierId: number) =>
+    apiClient.put(`/api/v1/orders/${orderId}/courier`, { courier_id: courierId }),
 };

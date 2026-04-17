@@ -97,15 +97,17 @@ export default function AccountForm({ role, userId }: AccountFormProps) {
 
     setSubmitLoading(true);
     try {
-      const response = await accountService.updateAccount(userId, {
+      const response = await accountService.updateAccount(userId, role, {
         email: roleEmail.trim(),
         phone: rolePhone.trim(),
       });
       const account = response.data?.data ?? (response.data as unknown as ApiAccountDTO);
       populateFields(account);
       setSubmitSuccess('Account updated successfully.');
+      setTimeout(() => setSubmitSuccess(null), 3000);
     } catch {
       setSubmitError('Failed to update account. Please try again.');
+      setTimeout(() => setSubmitError(null), 5000);
     } finally {
       setSubmitLoading(false);
     }

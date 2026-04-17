@@ -173,13 +173,25 @@ public class UserService {
         Optional<User> userOpt = this.findUserById(userId);
         if (userOpt.isEmpty()) return Optional.empty();
 
+        String normalizedPhone = null;
+        if (updateDTO.getPhone() != null) {
+            String digits = updateDTO.getPhone().replaceAll("[^0-9]", "");
+            if (digits.length() == 11 && digits.startsWith("1")) {
+                normalizedPhone = "+" + digits;
+            } else if (digits.length() == 10) {
+                normalizedPhone = "+1" + digits;
+            } else {
+                normalizedPhone = updateDTO.getPhone();
+            }
+        }
+
         switch (type) {
             case "customer" -> {
                 Optional<Customer> opt = customerService.findCustomerByUserId(userId);
                 if (opt.isEmpty()) return Optional.empty();
                 Customer c = opt.get();
                 if (updateDTO.getEmail() != null) c.setEmail(updateDTO.getEmail());
-                if (updateDTO.getPhone() != null) c.setPhone(updateDTO.getPhone());
+                if (normalizedPhone != null) c.setPhone(normalizedPhone);
                 customerService.saveCustomer(c);
             }
             case "courier" -> {
@@ -187,7 +199,7 @@ public class UserService {
                 if (opt.isEmpty()) return Optional.empty();
                 Courier c = opt.get();
                 if (updateDTO.getEmail() != null) c.setEmail(updateDTO.getEmail());
-                if (updateDTO.getPhone() != null) c.setPhone(updateDTO.getPhone());
+                if (normalizedPhone != null) c.setPhone(normalizedPhone);
                 courierService.saveCourier(c);
             }
             case "employee" -> {
@@ -195,7 +207,7 @@ public class UserService {
                 if (opt.isEmpty()) return Optional.empty();
                 Employee e = opt.get();
                 if (updateDTO.getEmail() != null) e.setEmail(updateDTO.getEmail());
-                if (updateDTO.getPhone() != null) e.setPhone(updateDTO.getPhone());
+                if (normalizedPhone != null) e.setPhone(normalizedPhone);
                 employeeService.saveEmployee(e);
             }
             default -> {

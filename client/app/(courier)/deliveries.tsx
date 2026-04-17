@@ -66,7 +66,7 @@ export default function CourierDeliveriesScreen() {
 
     setUpdatingOrderId(order.id);
     try {
-      const updated = await advanceOrderStatus(order);
+      const updated = await advanceOrderStatus(order, courierId!);
       setDeliveries((prev) =>
         prev.map((d) => (d.id === updated.id ? { ...d, status: updated.status } : d))
       );
@@ -183,80 +183,64 @@ export default function CourierDeliveriesScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             {selectedOrder && (
-              <ScrollView showsVerticalScrollIndicator={false}>
-                {/* Modal header */}
+              <>
+                {/* Dark header */}
                 <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>DELIVERY DETAILS</Text>
+                  <View>
+                    <Text style={styles.modalTitle}>DELIVERY DETAILS</Text>
+                    <Text style={styles.modalStatusLabel}>
+                      Status: {selectedOrder.status.toUpperCase()}
+                    </Text>
+                  </View>
                   <TouchableOpacity
                     onPress={() => setSelectedOrder(null)}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
-                    <FontAwesomeIcon icon={faTimes as any} size={20} color="#222126" />
+                    <FontAwesomeIcon icon={faTimes as any} size={20} color="#FFFFFF" />
                   </TouchableOpacity>
                 </View>
 
-                {/* Status sub-label */}
-                <Text style={styles.modalStatusLabel}>
-                  Status:{' '}
-                  <Text style={styles.modalStatusValue}>
-                    {selectedOrder.status.toUpperCase()}
-                  </Text>
-                </Text>
+                {/* White body */}
+                <ScrollView showsVerticalScrollIndicator={false} style={styles.modalBody}>
+                  {/* Delivery details */}
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Delivery Address: </Text>
+                    <Text style={styles.detailValue}>{selectedOrder.customer_address}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Restaurant: </Text>
+                    <Text style={styles.detailValue}>{selectedOrder.restaurant_name}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Order Date: </Text>
+                    <Text style={styles.detailValue}>{formatDate(selectedOrder.created_on)}</Text>
+                  </View>
 
-                {/* Advance status badge */}
-                <View style={styles.modalBadgeRow}>
-                  <StatusBadge
-                    status={selectedOrder.status}
-                    onPress={
-                      selectedOrder.status !== 'delivered'
-                        ? () => handleAdvanceStatus(selectedOrder)
-                        : undefined
-                    }
-                    loading={updatingOrderId === selectedOrder.id}
-                    disabled={updatingOrderId !== null}
-                  />
-                </View>
+                  <View style={styles.divider} />
 
-                <View style={styles.divider} />
+                  {/* Order items */}
+                  <Text style={styles.sectionTitle}>Order Details:</Text>
+                  {selectedOrder.products.map((product, index) => (
+                    <View key={index} style={styles.productRow}>
+                      <Text style={styles.productName}>{product.product_name}</Text>
+                      <Text style={styles.productQty}>x{product.quantity}</Text>
+                      <Text style={styles.productPrice}>
+                        $ {formatCents(product.unit_cost * product.quantity)}
+                      </Text>
+                    </View>
+                  ))}
 
-                {/* Delivery details */}
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Delivery Address:</Text>
-                  <Text style={styles.detailValue}>{selectedOrder.customer_address}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Restaurant:</Text>
-                  <Text style={styles.detailValue}>{selectedOrder.restaurant_name}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Order Date:</Text>
-                  <Text style={styles.detailValue}>{formatDate(selectedOrder.created_on)}</Text>
-                </View>
+                  <View style={styles.divider} />
 
-                <View style={styles.divider} />
-
-                {/* Order items */}
-                <Text style={styles.sectionTitle}>Order Details</Text>
-                {selectedOrder.products.map((product, index) => (
-                  <View key={index} style={styles.productRow}>
-                    <Text style={styles.productName}>{product.name}</Text>
-                    <Text style={styles.productQty}>x{product.quantity}</Text>
-                    <Text style={styles.productPrice}>
-                      $ {formatCents(product.unit_cost * product.quantity)}
+                  {/* Total */}
+                  <View style={styles.totalRow}>
+                    <Text style={styles.totalLabel}>TOTAL:</Text>
+                    <Text style={styles.totalValue}>
+                      $ {formatCents(selectedOrder.total_cost)}
                     </Text>
                   </View>
-                ))}
-
-                <View style={styles.divider} />
-
-                {/* Total */}
-                <View style={styles.totalRow}>
-                  <Text style={styles.totalLabel}>TOTAL:</Text>
-                  <Text style={styles.totalValue}>
-                    $ {formatCents(selectedOrder.total_cost)}
-                  </Text>
-                </View>
-              </ScrollView>
+                </ScrollView>
+              </>
             )}
           </View>
         </View>
@@ -388,7 +372,7 @@ const styles = StyleSheet.create({
   modalContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 10,
-    padding: 20,
+    overflow: 'hidden',
     width: '100%',
     maxWidth: 480,
     maxHeight: '85%',
@@ -397,7 +381,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    backgroundColor: '#222126',
+    padding: 16,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
   },
   modalTitle: {
     fontSize: 20,
@@ -405,17 +392,12 @@ const styles = StyleSheet.create({
     color: '#DA583B',
   },
   modalStatusLabel: {
-    fontSize: 14,
-    color: '#666666',
-    marginBottom: 10,
+    fontSize: 13,
+    color: '#FFFFFF',
+    marginTop: 2,
   },
-  modalStatusValue: {
-    fontFamily: OswaldFonts.bold,
-    color: '#222126',
-  },
-  modalBadgeRow: {
-    alignSelf: 'flex-start',
-    marginBottom: 4,
+  modalBody: {
+    padding: 16,
   },
   divider: {
     height: 1,

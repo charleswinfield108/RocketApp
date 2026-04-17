@@ -113,8 +113,8 @@ export default function RestaurantDetailScreen() {
       restaurant_id: currentRestaurantId,
       customer_id: customerId,
       products: orderItems.map((i) => ({ id: parseInt(i.menuItemId, 10), quantity: i.quantity })),
-      sendEmail: sendEmail,
-      sendSMS: sendSms,
+      send_email: sendEmail,
+      send_sms: sendSms,
     });
 
     if (response.status !== 201 && response.status !== 200) {

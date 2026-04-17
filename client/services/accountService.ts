@@ -26,10 +26,11 @@ export const accountService = {
 
   updateAccount: (
     userId: number,
+    type: 'customer' | 'courier',
     data: ApiUpdateAccountDTO
   ) =>
     apiClient.put<{ data: ApiAccountDTO }>(
-      `/api/account/${userId}`,
+      `/api/account/${userId}?type=${type}`,
       data
     ),
 };
