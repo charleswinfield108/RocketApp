@@ -8,11 +8,11 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onLogout }) => {
-  const { signout } = useAuth();
+  const { signOut } = useAuth();
   const insets = useSafeAreaInsets();
 
   const handleLogout = async () => {
-    await signout();
+    await signOut();
     if (onLogout) onLogout();
   };
 

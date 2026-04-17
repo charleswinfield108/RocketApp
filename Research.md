@@ -188,3 +188,97 @@ The integration is guarded — if the Twilio credentials are blank in `applicati
 - **Never commit your Auth Token** to version control. Use `.gitignore` or environment variables.
 - The `.env.example` file in this project documents required variables without exposing real values.
 - On a Twilio trial account, SMS can only be sent to verified phone numbers. Upgrade to a paid account to send to any number.
+
+---
+
+## APIs Used in RocketApp
+
+### 1. Rocket Food Delivery REST API
+
+**Type:** Custom — Java Spring Boot  
+**Location:** `server/serverJAVA/`  
+**Base URL (dev):** Configured via `EXPO_PUBLIC_API_URL` environment variable
+
+The project's own backend API, built in Module 12. It handles all core application data: authentication, restaurant listings, menus, order management, account management, and delivery tracking.
+
+**Key endpoints used by the mobile client:**
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| `POST` | `/api/v1/login` | Authenticate user; returns JWT token, `customer_id`, `courier_id`, and `user_id` |
+| `GET` | `/api/v1/restaurants` | Fetch all restaurants for the restaurant list screen |
+| `GET` | `/api/v1/restaurants/{id}/products` | Fetch menu items for a specific restaurant |
+| `POST` | `/api/v1/orders` | Place a new order (includes `send_email` and `send_sms` notification flags) |
+| `GET` | `/api/v1/orders/customer/{customerId}` | Fetch order history for a customer |
+| `GET` | `/api/v1/orders/courier/{courierId}` | Fetch active deliveries assigned to a courier |
+| `PUT` | `/api/v1/orders/{id}` | Update an order's status (used by courier to advance delivery status) |
+| `GET` | `/api/v1/account/{userId}` | Fetch account details (name, login email, customer/courier sub-profiles) |
+| `PUT` | `/api/v1/account/{userId}?type={customer\|courier}` | Update contact email and phone number for a role |
+
+All authenticated endpoints require a `Bearer {token}` header. The token is obtained at login and stored locally on the device.
+
+---
+
+### 2. Twilio API
+
+**Type:** Third-party — SMS messaging  
+**Used by:** Server only (`NotificationService.java`)  
+**Documentation:** [twilio.com/docs](https://www.twilio.com/docs)
+
+Twilio sends SMS order confirmation messages to customers who opt in by checking "By Phone" on the order confirmation screen. The mobile app does not call Twilio directly — it passes `send_sms: true` in the order POST body, and the server handles the Twilio API call internally.
+
+**Credentials required (server-side `application.properties`):**
+- `TWILIO_ACCOUNT_SID`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_FROM_NUMBER`
+
+---
+
+### 3. Notify.EU API
+
+**Type:** Third-party — Email delivery  
+**Used by:** Server only (`NotificationService.java`)  
+**Documentation:** [notify.eu](https://notify.eu)
+
+Notify.EU sends email order confirmation messages to customers who opt in by checking "By Email" on the order confirmation screen. Like Twilio, the mobile app only passes `send_email: true` in the POST body — the server handles the Notify.EU API call.
+
+**Credentials required (server-side `application.properties`):**
+- `NOTIFY_API_KEY`
+
+---
+
+### 4. Expo Google Fonts — Oswald
+
+**Type:** Third-party library — Font loading  
+**Package:** `@expo-google-fonts/oswald`  
+**Used by:** Client — `app/_layout.tsx`
+
+This library loads the Oswald font family (weights: 400 Regular, 600 SemiBold, 700 Bold) from Google Fonts into the Expo app at startup. Oswald is used for all headings, labels, buttons, tab bar labels, and status badges throughout the app. The loaded font names are referenced via the `OswaldFonts` constant in `constants/theme.ts`.
+
+The app does not render any screen until the fonts are fully loaded, guarded by `useFonts()` in the root layout.
+
+---
+
+### 5. AsyncStorage
+
+**Type:** React Native local storage API  
+**Package:** `@react-native-async-storage/async-storage`  
+**Used by:** Client — `services/authContext.tsx`
+
+AsyncStorage is React Native's key-value storage system, analogous to `localStorage` in the browser. It persists the user's authentication state across app restarts — specifically the JWT token, `customer_id`, `courier_id`, and `user_id` returned at login. On app launch, `authContext.tsx` reads these values to restore the session without requiring the user to log in again.
+
+The active role (`customer` or `courier`) is **not** persisted — it is session-only state held in React context. The user selects their role on each login if they hold both roles.
+
+---
+
+### 6. Ngrok
+
+**Type:** Development tool — Reverse tunnel / public URL proxy  
+**Used by:** Development environment only  
+**Documentation:** [ngrok.com/docs](https://ngrok.com/docs)
+
+Ngrok creates a publicly accessible HTTPS tunnel to the local Spring Boot server running on `localhost:8080`. This is required during development when testing on a physical iOS or Android device, because the device cannot reach `localhost` on the developer's machine directly.
+
+The tunnel URL is set as the `EXPO_PUBLIC_API_URL` environment variable in `client/.env`. On WSL2, additional Windows Firewall inbound rules and `netsh interface portproxy` forwarding rules are also required to expose the port from WSL2 to the Windows host.
+
+Ngrok is not used in production — the app points at the real backend URL via the environment variable.

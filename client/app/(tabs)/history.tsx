@@ -12,10 +12,14 @@ import {
 import { useFocusEffect } from 'expo-router';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
-import { Header } from '../../components/Header';
-import { OrderHistoryDetailModal } from '../../components/OrderHistoryDetailModal';
-import { useAuth } from '../../services/authContext';
-import orderHistoryAPI, { Order } from '../../services/orderHistoryService';
+import { Header } from '@/components/Header';
+import { OrderHistoryDetailModal } from '@/components/OrderHistoryDetailModal';
+import { useAuth } from '@/services/authContext';
+import orderHistoryAPI, { Order } from '@/services/orderHistoryService';
+
+// Sort orders newest-first by creation date
+const sortByDate = (list: Order[]): Order[] =>
+  [...list].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
 export default function OrderHistoryScreen() {
   const { customerId } = useAuth();
@@ -35,10 +39,7 @@ export default function OrderHistoryScreen() {
       const orderList = Array.isArray(response.data.orders)
         ? response.data.orders
         : [];
-      orderList.sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-      setOrders(orderList);
+      setOrders(sortByDate(orderList));
     } catch {
       setError('Failed to load order history. Please try again.');
     } finally {
@@ -64,10 +65,7 @@ export default function OrderHistoryScreen() {
       const orderList = Array.isArray(response.data.orders)
         ? response.data.orders
         : [];
-      orderList.sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-      setOrders(orderList);
+      setOrders(sortByDate(orderList));
     } catch {
       setError('Failed to refresh. Please try again.');
     } finally {

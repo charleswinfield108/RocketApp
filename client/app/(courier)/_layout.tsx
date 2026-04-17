@@ -3,13 +3,13 @@ import React from 'react';
 import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faHamburger, faHistory, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faHistory, faUser } from '@fortawesome/free-solid-svg-icons';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
-export default function TabLayout() {
+export default function CourierTabLayout() {
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
   const bottomPad = Platform.OS === 'ios' ? 28 : insets.bottom + 8;
@@ -40,29 +40,15 @@ export default function TabLayout() {
         },
       }}
     >
-      {/* Restaurants Tab - with nested stack navigator */}
       <Tabs.Screen
-        name="(restaurant)"
+        name="deliveries"
         options={{
-          title: 'Restaurants',
-          tabBarIcon: ({ color }) => (
-            <FontAwesomeIcon icon={faHamburger as any} size={24} color={color} />
-          ),
-        }}
-      />
-
-      {/* Order History Tab */}
-      <Tabs.Screen
-        name="history"
-        options={{
-          title: 'Order History',
+          title: 'Order Delivery',
           tabBarIcon: ({ color }) => (
             <FontAwesomeIcon icon={faHistory as any} size={24} color={color} />
           ),
         }}
       />
-
-      {/* Account Tab */}
       <Tabs.Screen
         name="account"
         options={{
@@ -72,7 +58,6 @@ export default function TabLayout() {
           ),
         }}
       />
-
     </Tabs>
   );
 }

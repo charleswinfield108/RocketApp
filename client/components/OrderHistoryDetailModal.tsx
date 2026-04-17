@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import { Order } from '../services/orderHistoryService';
+import { Order } from '@/services/orderHistoryService';
 import { OswaldFonts } from '@/constants/theme';
 
 interface OrderHistoryDetailModalProps {

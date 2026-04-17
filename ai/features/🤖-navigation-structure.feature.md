@@ -1,27 +1,33 @@
 # 🤖 AI_FEATURE_Navigation Structure
 
 > This feature establishes the complete navigation hierarchy of the RocketApp mobile application.
-> It implements the three-level nested navigation pattern required by the project specification.
+> Module 14 extends the three-level customer navigation from Module 13 with role-based routing,
+> an account selection screen for dual-role users, and a separate courier tab section.
 
 ---
 
 ## Feature Identity
 
 - **Feature Name:** Navigation Structure
+- **Module:** 14 (extends Module 13)
 - **Related Area:** Mobile Frontend (React Native + Expo)
-- **Priority:** Foundational (Core to all other features)
-- **Dependencies:** None (foundation layer)
+- **Priority:** Foundational (all other features depend on this)
+- **Dependencies:** AuthContext (role + token state), Oswald font loading (root layout)
+- **Spec File:** `ai/🤖-ai-spec.md` → Architecture & Navigation Architecture section
 
 ---
 
 ## Feature Goal
 
-Establish a robust, three-level nested navigation architecture that allows users to seamlessly navigate between:
-1. Authentication screens (Login)
-2. Customer application tabs (Restaurants, Order History, Profile)
-3. Restaurant details and menus within the customer context
+Extend the existing three-level customer navigation to support:
 
-The navigation structure provides the **backbone** for the entire application, enabling other features (login, restaurant browsing, ordering) to be properly nested and accessible.
+1. **Role-based routing** — after login, route to account selection (dual-role) or directly to the correct section (single-role)
+2. **Account selection screen** — dual-role users choose Customer or Courier before entering the app
+3. **Customer tabs updated** — three tabs: Restaurants, OrderHistory, Account
+4. **Courier tab section** — two tabs: Deliveries, Account
+5. **Nested restaurant stack** — unchanged from Module 13, documented here for completeness
+
+The navigation structure is the **backbone** of the entire application. All screens, roles, and flows depend on this being correctly implemented before any other feature is built.
 
 ---
 
@@ -29,55 +35,163 @@ The navigation structure provides the **backbone** for the entire application, e
 
 ### In Scope (Included)
 
-- **Root Stack Navigator** — Controls auth vs. authenticated app flow
-- **Customer Tab Navigator** — Bottom navigation for authenticated users
-- **Restaurant Stack Navigator** — Nested stack for restaurant browsing
-- **Footer Component** — Visual container with two tabs (Restaurants, Order History)
-- **Navigation Links** — Proper routing between all three levels
-- **Route Parameters** — Restaurant ID passing for dynamic routes
-- **Back Button Behavior** — Standard back navigation within stacks
-- **Screen Transitions** — Smooth animations between screens
+- Root Stack Navigator (`app/_layout.tsx`) — auth check, role detection, font loading
+- Account selection screen (`app/(auth)/account-selection.tsx`) — dual-role role picker
+- Customer Tab Navigator (`app/(tabs)/_layout.tsx`) — 3 tabs
+- Courier Tab Navigator (`app/(courier)/_layout.tsx`) — 2 tabs
+- Restaurant nested Stack Navigator (`app/(tabs)/(restaurant)/_layout.tsx`) — unchanged
+- Auth Stack layout (`app/(auth)/_layout.tsx`) — login + account selection
+- Header/footer visibility rules per screen
 
 ### Out of Scope (Excluded)
 
-- Login screen implementation (separate feature)
-- Restaurant list UI rendering (separate feature)
-- Restaurant menu display (separate feature)
-- Order history UI rendering (separate feature)
-- Real API data fetching (handled by other features)
-- Profile screen implementation (separate feature)
+- Login screen UI (see `🤖-login-page.feature.md`)
+- Header component implementation (see `🤖-header-footer.feature.md`)
+- Courier delivery list UI (see `🤖-courier-deliveries.feature.md`)
+- Account management screen UI (see `🤖-account-management.feature.md`)
+- Actual data fetching (handled by screen-level features)
 
 ---
 
 ## Sub-Requirements (Feature Breakdown)
 
-1. **Root Level Stack Navigation** — `app/_layout.tsx`
-   - Manage top-level navigation between Auth and App screens
-   - Conditionally show Auth stack (login) OR App stack (tabs) based on authentication state
-   - Use React Context or state to track authentication
+### 1. Root Layout — `app/_layout.tsx`
 
-2. **Customer Tabs Navigation** — `app/(tabs)/_layout.tsx`
-   - Implement Tab Navigator with two visible tabs: Restaurants, Order History
-   - Third tab (Profile) accessible but less prominent
-   - Bottom tab bar always visible (except on login)
-   - Each tab links to its respective screen
+**Responsibilities:**
+- Load Oswald fonts before rendering any screen (block on `useFonts`)
+- Wrap entire app in `SafeAreaProvider` and `AuthProvider`
+- Conditionally route based on auth + role state:
+  - No token → `(auth)/login`
+  - Token + customer only → `(tabs)`
+  - Token + courier only → `(courier)`
+  - Token + both roles + no role selected → `(auth)/account-selection`
+  - Token + both roles + role selected → `(tabs)` or `(courier)` per chosen role
 
-3. **Restaurant Nested Stack** — `app/(restaurant)/_layout.tsx`
-   - Implement Stack Navigator within the Restaurants tab
-   - Support navigation from restaurants list to individual restaurant detail
-   - Accept restaurant ID as route parameter
-   - Enable back navigation to restaurants list
+**Font loading:**
+```typescript
+const [fontsLoaded] = useFonts({
+  Oswald_400Regular,
+  Oswald_600SemiBold,
+  Oswald_700Bold,
+});
+if (!fontsLoaded) return <ActivityIndicator />;
+```
 
-4. **Footer Component** — `app/(tabs)/_layout.tsx` or dedicated component
-   - Visual footer with two navigation buttons/tabs
-   - Clear active state indicator
-   - Responsive to screen size
-   - Matches wireframe design exactly
+**Stack screens registered:**
+```
+<Stack>
+  <Stack.Screen name="(tabs)"    options={{ headerShown: false }} />
+  <Stack.Screen name="(courier)" options={{ headerShown: false }} />
+  <Stack.Screen name="(auth)"    options={{ headerShown: false }} />
+</Stack>
+```
 
-5. **Dynamic Routing**
-   - Restaurant details screen accepts ID parameter: `[id]`
-   - Allows passing data between screens
-   - Enables deep linking if needed
+**Current implementation note:** `app/_layout.tsx` exists with font loading and `AuthProvider`. Module 14 adds `(courier)` screen registration and role-aware routing logic.
+
+---
+
+### 2. Auth Stack Layout — `app/(auth)/_layout.tsx`
+
+**Responsibilities:**
+- Define the unauthenticated stack: login + account selection
+- No header shown (`headerShown: false` on all screens)
+- No tab bar visible
+
+**Stack screens:**
+```
+<Stack>
+  <Stack.Screen name="login"              options={{ headerShown: false }} />
+  <Stack.Screen name="account-selection"  options={{ headerShown: false }} />
+</Stack>
+```
+
+---
+
+### 3. Account Selection Screen — `app/(auth)/account-selection.tsx`
+
+**Responsibilities:**
+- Shown only when the logged-in user has both `customer_id` and `courier_id`
+- Displays the Rocket Food Delivery logo and "Select Account Type" prompt
+- Two tappable cards: **Customer** (person icon) and **Courier** (taxi icon)
+- Tapping a card sets the active role in `AuthContext` and navigates to the correct section
+- Back navigation is **blocked** — use `router.replace()`, never `router.push()`
+- Header and footer tabs are **not shown** on this screen
+
+**Navigation targets:**
+```typescript
+// Customer selected
+router.replace('/(tabs)/(restaurant)');
+
+// Courier selected
+router.replace('/(courier)/deliveries');
+```
+
+**Layout (from wireframe):**
+- Rocket Food Delivery logo centered
+- "Select Account Type" label below logo
+- Two side-by-side cards with icon + label
+  - Left card: person icon → "Customer"
+  - Right card: taxi/car icon → "Courier"
+
+---
+
+### 4. Customer Tab Navigator — `app/(tabs)/_layout.tsx`
+
+**Three visible tabs (from wireframe):**
+
+| Tab | Screen | Icon | Label |
+|-----|--------|------|-------|
+| 1 | `(restaurant)` | Hamburger | Restaurants |
+| 2 | `history` | History/clock | OrderHistory |
+| 3 | `account` | Person | Account |
+
+**Rules:**
+- Active tab highlighted with brand color
+- All three tabs always visible
+- No hidden tabs (remove `href: null` from profile/explore)
+- `profile.tsx` from Module 13 is **renamed/replaced** by `account.tsx`
+- `explore.tsx` (Expo default) is **deleted** — it was never used
+
+**Current implementation note:** `(tabs)/_layout.tsx` exists with 2 tabs. Module 14 adds the Account tab and removes unused hidden tabs.
+
+---
+
+### 5. Courier Tab Navigator — `app/(courier)/_layout.tsx`
+
+**Two visible tabs (from wireframe):**
+
+| Tab | Screen | Icon | Label |
+|-----|--------|------|-------|
+| 1 | `deliveries` | History/clock | Deliveries |
+| 2 | `account` | Person | Account |
+
+**Rules:**
+- Active tab highlighted with brand color
+- No shared tabs with customer section — completely independent navigator
+- Deliveries tab is the default (initial) screen
+
+**New files required:**
+- `app/(courier)/_layout.tsx` — Tab Navigator definition
+- `app/(courier)/deliveries.tsx` — Courier home screen
+- `app/(courier)/account.tsx` — Courier account management
+
+---
+
+### 6. Nested Restaurant Stack — `app/(tabs)/(restaurant)/_layout.tsx`
+
+**Unchanged from Module 13.** Documented here for completeness.
+
+Stack screens within the Restaurants tab:
+```
+(restaurant)/
+├── index.tsx        ← Restaurant list (default screen)
+├── [id].tsx         ← Restaurant menu (dynamic route)
+└── modal.tsx        ← Order confirmation modal
+```
+
+- `index.tsx` is the default entry point for the Restaurants tab
+- Tapping a restaurant card navigates to `[id]` with the restaurant ID as a param
+- Confirmation modal overlays from `modal.tsx`
 
 ---
 
@@ -86,209 +200,246 @@ The navigation structure provides the **backbone** for the entire application, e
 ```
 App Launch
   ↓
-[Root Navigator] — Checks authentication state
-  ├─ IF not authenticated → Show Auth Stack
-  │   └─ Login Screen (authentication handled separately)
-  │
-  └─ IF authenticated → Show App Stack
-      ↓
-      [Tab Navigator] — Customer area with bottom tabs
-         ├─ Restaurants Tab (default)
-         │   ↓
-         │   [Restaurant List]
-         │   ↓
-         │   [Tap Restaurant Card]
-         │   ↓
-         │   [Stack Navigator]
-         │   ├─ Restaurant Detail [id]
-         │   ├─ Order Confirmation Modal
-         │   └─ Back → Restaurant List
-         │
-         ├─ Order History Tab
-         │   ↓
-         │   [Order List]
-         │   ├─ Tap Order
-         │   └─ Order Detail Modal
-         │
-         └─ Profile Tab
-             ↓
-             [User Profile]
+[Root Layout]
+  ├─ Fonts loading? → Show ActivityIndicator
+  ├─ Auth loading?  → Show ActivityIndicator
+  └─ Ready
+      ├─ No token → router.replace('/(auth)/login')
+      ├─ Token + isCustomer only  → router.replace('/(tabs)/(restaurant)')
+      ├─ Token + isCourier only   → router.replace('/(courier)/deliveries')
+      └─ Token + isDualRole
+          ├─ No role selected yet → router.replace('/(auth)/account-selection')
+          ├─ Role = 'customer'    → router.replace('/(tabs)/(restaurant)')
+          └─ Role = 'courier'     → router.replace('/(courier)/deliveries')
+
+Account Selection Screen
+  ├─ Tap "Customer" → set role in AuthContext → router.replace('/(tabs)/(restaurant)')
+  └─ Tap "Courier"  → set role in AuthContext → router.replace('/(courier)/deliveries')
+
+Customer Section [(tabs)]
+  ├─ Tab 1: Restaurants → (restaurant)/index → tap card → (restaurant)/[id]
+  ├─ Tab 2: OrderHistory → history.tsx
+  └─ Tab 3: Account → account.tsx
+
+Courier Section [(courier)]
+  ├─ Tab 1: Deliveries → deliveries.tsx → tap VIEW → Delivery Details Modal (overlay)
+  └─ Tab 2: Account → account.tsx
+
+Logout (from any screen)
+  └─ Clear token + role + IDs → router.replace('/(auth)/login')
 ```
 
 ---
 
 ## Interfaces (Pages, Endpoints, Screens)
 
-### Frontend Routes (File Structure)
+### File Structure (Complete — Module 14)
 
 ```
 app/
-├── _layout.tsx                    # Root Stack Navigator
-├── (auth)/
-│   ├── _layout.tsx               # Auth Stack Layout
-│   └── login.tsx                 # Login screen (separate feature)
+├── _layout.tsx                        # Root Stack — font loading, auth guard, role routing
 │
-└── (tabs)/
-    ├── _layout.tsx               # Tab Navigator (with footer)
-    ├── index.tsx                 # Restaurants screen (tab 1)
-    ├── history.tsx               # Order History screen (tab 2)
-    ├── profile.tsx               # Profile screen (tab 3)
-    │
-    └── (restaurant)/
-        ├── _layout.tsx           # Restaurant Stack Navigator
-        ├── [id].tsx              # Restaurant detail/menu screen
-        └── modal.tsx             # Confirmation/detail modals
+├── (auth)/
+│   ├── _layout.tsx                    # Auth Stack layout
+│   ├── login.tsx                      # Login screen
+│   └── account-selection.tsx          # NEW: role picker for dual-role users
+│
+├── (tabs)/                            # Customer section
+│   ├── _layout.tsx                    # UPDATED: 3-tab navigator
+│   ├── history.tsx                    # Order History screen
+│   ├── account.tsx                    # NEW: Customer account management
+│   └── (restaurant)/
+│       ├── _layout.tsx                # Restaurant Stack (unchanged)
+│       ├── index.tsx                  # Restaurant list
+│       ├── [id].tsx                   # Restaurant menu
+│       └── modal.tsx                  # Order confirmation modal
+│
+└── (courier)/                         # NEW: Courier section
+    ├── _layout.tsx                    # NEW: 2-tab courier navigator
+    ├── deliveries.tsx                 # NEW: Courier delivery list
+    └── account.tsx                    # NEW: Courier account management
 ```
 
-### Route Names & Parameters
+**Files to delete:**
+- `app/(tabs)/profile.tsx` — replaced by `account.tsx`
+- `app/(tabs)/explore.tsx` — Expo default, never used
+- `app/modal.tsx` (root level) — confirm if still needed; delivery modal is inline
 
-| Route | Purpose | Parameters |
-|-------|---------|-----------|
-| `(auth)/login` | User login | None |
-| `(tabs)/index` | Restaurant list | None |
-| `(tabs)/history` | Order history | None |
-| `(tabs)/profile` | User profile | None |
-| `(tabs)/(restaurant)/[id]` | Restaurant menu | `id` (restaurant ID) |
-| `(tabs)/(restaurant)/modal` | Order confirmation | Passed via route state |
+### Route Map
+
+| Route | Screen | Auth Required | Role |
+|-------|--------|---------------|------|
+| `(auth)/login` | Login | No | Any |
+| `(auth)/account-selection` | Role Picker | Yes (token exists) | Dual-role only |
+| `(tabs)/(restaurant)` | Restaurant List | Yes | Customer |
+| `(tabs)/(restaurant)/[id]` | Restaurant Menu | Yes | Customer |
+| `(tabs)/history` | Order History | Yes | Customer |
+| `(tabs)/account` | Customer Account | Yes | Customer |
+| `(courier)/deliveries` | Delivery List | Yes | Courier |
+| `(courier)/account` | Courier Account | Yes | Courier |
 
 ### No Backend Endpoints Required
-- Navigation is frontend-only (no API calls)
-- Data fetching is handled by separate features
+Navigation is frontend-only. Data fetching is handled by screen-level features.
 
 ---
 
 ## Data Used or Modified
 
-### Navigation State (Local)
+### AuthContext State
 
 | State | Type | Purpose |
 |-------|------|---------|
-| `authToken` | string \| null | Determines if user is authenticated |
-| `currentTab` | 'restaurants' \| 'history' \| 'profile' | Active tab indicator |
-| `selectedRestaurantID` | string \| null | Current restaurant being viewed |
+| `isSignedIn` | boolean | Controls auth vs. app routing |
+| `isLoading` | boolean | Prevents premature redirect before token check |
+| `customerId` | string \| null | Identifies user as customer |
+| `courierId` | string \| null | Identifies user as courier (NEW) |
+| `activeRole` | `'customer' \| 'courier' \| null` | Chosen role for session (NEW) |
 
-### Route Parameters
+### AsyncStorage Keys
 
-| Parameter | Type | Source | Used By |
-|-----------|------|--------|---------|
-| `id` | string | Restaurant list screen | Restaurant detail screen |
+| Key | Written By | Read By |
+|-----|-----------|---------|
+| `authToken` | Login screen | Root layout (auth check) |
+| `customerId` | Login screen | AuthContext |
+| `courierId` | Login screen | AuthContext (NEW) |
 
-### No Data Modifications
-- Navigation structure does not modify user data
-- Data flows are handled by feature-specific services
+### Role is Session-Only
+`activeRole` lives in React Context only — it is **not persisted** to AsyncStorage. On app restart, dual-role users go through account selection again.
 
 ---
 
 ## Tech Constraints (Feature-Level)
 
 ### Required Technologies
-
-- **Framework:** expo-router (file-based routing, not React Navigation manual setup)
-- **Navigation Type:** Nested Stack + Tab Navigation (3 levels)
-- **State Management:** React Context or Local State (auth check)
-- **Animations:** react-native-reanimated (smooth transitions)
+- **Routing:** expo-router (file-based — directory structure defines routes)
+- **Navigation types:** Stack (root + auth), Tabs (customer + courier), Stack (restaurant nested)
+- **State:** React Context (`AuthProvider`) for auth + role state
+- **Fonts:** `@expo-google-fonts/oswald` loaded in root layout — app does NOT render until fonts are ready
+- **Icons:** FontAwesome (`@fortawesome/react-native-fontawesome`)
 
 ### Structural Rules
+- Parentheses in folder names `(name)` create layout groups without adding to URL path
+- `_layout.tsx` files define the navigation container for that folder
+- `[id].tsx` is a dynamic segment — receives the param as `useLocalSearchParams().id`
+- **No manual React Navigation setup** — expo-router handles all routing declaratively
+- `router.replace()` must be used for all post-login navigation (prevents back-nav to login or account selection)
 
-- **Use expo-router conventions** — Directory structure defines routes automatically
-- **No manual route registration** — Routes derived from file paths
-- **Nested folders indicate nesting** — `(tabs)` and `(restaurant)` create layout groups
-- **Dynamic segments** — `[id]` parameter syntax for restaurant details
-- **Layout files control navigation** — `_layout.tsx` files define navigation structure
-
-### Styling Constraints
-
-- Footer should match wireframe design exactly
-- Tab colors from `constants/colors.ts`
-- Use React Native StyleSheet (no CSS)
-- Icons from FontAwesome
-
-### No External Navigation Libraries
-- Do not manually use React Navigation functions
-- expo-router handles routing declaratively
-- Stick to expo-router conventions throughout
+### Header/Footer Visibility Rules
+| Screen | Header Shown | Tab Bar Shown |
+|--------|-------------|---------------|
+| Login | No | No |
+| Account Selection | No | No |
+| All Customer tabs | Yes | Yes |
+| All Courier tabs | Yes | Yes |
+| Restaurant menu `[id]` | Yes | Yes (parent tab bar) |
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] Root `app/_layout.tsx` created and controls Auth vs. App flow
-- [ ] Tab Navigator in `app/(tabs)/_layout.tsx` displays two visible tabs
-- [ ] Footer component implemented with Restaurants and Order History tabs
-- [ ] Restaurant Stack Navigator in `app/(restaurant)/_layout.tsx` working
-- [ ] Dynamic restaurant ID parameter passed and accessible in detail screen
-- [ ] Back button navigates correctly through all three levels
+### Root Layout
+- [ ] App does not render any screen until Oswald fonts are loaded
+- [ ] `ActivityIndicator` shown during font load and auth state load
+- [ ] Unauthenticated users are always redirected to `(auth)/login`
+- [ ] Single-role customer is routed directly to `(tabs)/(restaurant)` after login
+- [ ] Single-role courier is routed directly to `(courier)/deliveries` after login
+- [ ] Dual-role user is routed to `(auth)/account-selection` after login
+- [ ] Dual-role user with role selected is routed to correct section
+- [ ] `(courier)` is registered as a Stack screen in root layout
+
+### Account Selection Screen
+- [ ] Screen only appears for users with both `customer_id` and `courier_id`
+- [ ] Rocket Food Delivery logo visible
+- [ ] "Select Account Type" label visible
+- [ ] Two role cards displayed: Customer and Courier
+- [ ] Tapping Customer → sets `activeRole = 'customer'` → navigates to customer tabs
+- [ ] Tapping Courier → sets `activeRole = 'courier'` → navigates to courier tabs
+- [ ] Back button does not navigate to login (`router.replace` used)
+- [ ] No header or tab bar visible on this screen
+
+### Customer Tab Navigator
+- [ ] Three tabs visible: Restaurants, OrderHistory, Account
+- [ ] Active tab highlighted with brand color
+- [ ] `profile.tsx` removed; replaced by `account.tsx`
+- [ ] `explore.tsx` removed
+- [ ] Tab bar matches wireframe layout
+
+### Courier Tab Navigator
+- [ ] Two tabs visible: Deliveries, Account
+- [ ] Active tab highlighted with brand color
+- [ ] Deliveries is the default/initial tab
+- [ ] Courier section is completely independent from customer section
+
+### Restaurant Nested Stack
+- [ ] Restaurants tab opens `(restaurant)/index.tsx` by default
+- [ ] Tapping a restaurant card navigates to `(restaurant)/[id]` with correct ID param
+- [ ] Back button from `[id]` returns to restaurant list
+- [ ] Order confirmation modal accessible from `[id]` screen
+
+### Cross-Platform
+- [ ] All navigation works on iOS simulator
+- [ ] All navigation works on Android simulator
 - [ ] No console errors in navigation
-- [ ] Navigation persists across hot reloads
-- [ ] Auth state changes immediately switch between Auth and App stacks
-- [ ] All routes match the file structure defined above
-- [ ] Tab switching updates active state visually
-- [ ] Navigation matches wireframe layout exactly
-- [ ] Works on iOS simulator
-- [ ] Works on Android simulator
 
 ---
 
 ## Notes for the AI
 
-### Important Implementation Notes
+### Key Changes from Module 13
 
-1. **Expo Router is File-Based**
-   - Routes are automatically generated from the file structure
-   - Do not create manual route names or configurations
-   - Folder names in parentheses `(name)` create layout groups without adding to URL
+1. **Root layout** (`app/_layout.tsx`) already exists with font loading and `AuthProvider`. Extend it to:
+   - Register `(courier)` as a Stack screen
+   - Add `courierId` and `activeRole` to auth state check
+   - Add routing logic for dual-role → account selection
 
-2. **Three-Level Nesting**
-   - Level 1 (Root): Auth vs. App decision in `app/_layout.tsx`
-   - Level 2 (Tabs): Bottom navigation in `app/(tabs)/_layout.tsx`
-   - Level 3 (Stack): Restaurant details in `app/(restaurant)/_layout.tsx`
+2. **Account selection** is a new file: `app/(auth)/account-selection.tsx`. Add it to the auth `_layout.tsx` stack.
 
-3. **Auth Flow**
-   - Root layout should check `authToken` from AsyncStorage or Context
-   - Show `(auth)` layout if no token
-   - Show `(tabs)` layout if token exists
-   - This is **control flow**, not a separate screen
+3. **Tabs layout** (`app/(tabs)/_layout.tsx`) already has 2 tabs. Add the Account tab and delete hidden tabs:
+   - Remove `<Tabs.Screen name="profile" options={{ href: null }} />`
+   - Remove `<Tabs.Screen name="explore" options={{ href: null }} />`
+   - Remove `<Tabs.Screen name="index" options={{ href: null }} />`
+   - Add `<Tabs.Screen name="account" options={{ title: 'Account', tabBarIcon: ... }} />`
 
-4. **Footer Always Visible**
-   - Footer defined in `app/(tabs)/_layout.tsx` (Tab Navigator layout)
-   - Should NOT appear on login screen (different root layout)
-   - Should appear on all three tabs automatically
+4. **Courier layout** is an entirely new folder and file: `app/(courier)/_layout.tsx`.
 
-5. **Restaurant Stack Within Tab**
-   - Restaurant list is in `(tabs)/index.tsx`
-   - Restaurant detail is in `(restaurant)/[id].tsx`
-   - When tapping a restaurant, navigate to `(restaurant)/[id]` with `id` parameter
-   - Use `router.push()` or Link component with route parameter
+### Common Mistakes to Avoid
 
-6. **Common Mistakes to Avoid**
-   - ❌ Do not manually create React Navigation setup
-   - ❌ Do not forget parentheses in folder names for layout grouping
-   - ❌ Do not hardcode route names — use file paths
-   - ❌ Do not forget `_layout.tsx` files — they define navigation structure
-   - ❌ Do not put authentication logic in every screen — put it in Root `_layout.tsx`
+- ❌ Using `router.push()` for post-login redirects — always use `router.replace()`
+- ❌ Persisting `activeRole` to AsyncStorage — it is session-only (Context only)
+- ❌ Sharing tab navigators between customer and courier sections
+- ❌ Rendering the app before fonts are loaded (causes layout flash)
+- ❌ Forgetting to register `(courier)` in the root Stack — it will 404
+- ❌ Leaving `explore.tsx` or `profile.tsx` in `(tabs)/` — they must be deleted or expo-router will register them as routes
 
-### Step-by-Step Implementation Path
+### Implementation Order
 
-1. Create `app/_layout.tsx` — Root Stack, conditionally show Auth or Tabs
-2. Create `app/(auth)/_layout.tsx` — Auth Stack (Login comes later)
-3. Create `app/(tabs)/_layout.tsx` — Tab Navigator with footer
-4. Create `app/(tabs)/index.tsx` — Restaurants tab screen
-5. Create `app/(tabs)/history.tsx` — Order History tab screen
-6. Create `app/(tabs)/profile.tsx` — Profile tab screen
-7. Create `app/(restaurant)/_layout.tsx` — Stack Navigator within tabs
-8. Create `app/(restaurant)/[id].tsx` — Restaurant detail screen (dynamic route)
-9. Test navigation between all levels
-10. Verify auth state controls visibility
+1. Update `AuthContext` to include `courierId` and `activeRole` state
+2. Update `app/_layout.tsx` — register `(courier)`, add role-aware routing
+3. Update `app/(auth)/_layout.tsx` — add `account-selection` screen
+4. Create `app/(auth)/account-selection.tsx`
+5. Update `app/(tabs)/_layout.tsx` — add Account tab, remove dead screens
+6. Create `app/(tabs)/account.tsx` (stub — full UI in account-management feature)
+7. Delete `app/(tabs)/profile.tsx` and `app/(tabs)/explore.tsx`
+8. Create `app/(courier)/_layout.tsx`
+9. Create `app/(courier)/deliveries.tsx` (stub — full UI in courier-deliveries feature)
+10. Create `app/(courier)/account.tsx` (stub — full UI in account-management feature)
+11. Test all routing paths: no token, customer only, courier only, dual-role
 
 ---
 
 ## References
 
-- **Global Specification:** `./ai/ai-spec.md` (Architecture, Tech Stack)
+- **Global Specification:** `ai/🤖-ai-spec.md` — Navigation Architecture, Role Detection Logic
+- **Auth Context:** `client/services/authContext.tsx` — token, role, isLoading state
+- **Root Layout (existing):** `client/app/_layout.tsx`
+- **Tabs Layout (existing):** `client/app/(tabs)/_layout.tsx`
+- **Login Feature:** `ai/features/🤖-login-page.feature.md`
+- **Account Selection Feature:** `ai/features/🤖-account-selection.feature.md`
+- **Courier Deliveries Feature:** `ai/features/🤖-courier-deliveries.feature.md`
+- **Account Management Feature:** `ai/features/🤖-account-management.feature.md`
 - **Expo Router Docs:** https://docs.expo.dev/routing/introduction/
-- **Nested Navigation Example:** Three-level nesting required by project
-- **Wireframe:** `support_materials_13/Design/` (footer layout reference)
+- **Wireframe:** `support_materials_14/Design/` — tab bar layouts, account selection screen
 
 ---
 
-**This feature is foundational. All other features depend on this navigation structure being properly implemented.**
+**This feature is foundational. All other Module 14 features depend on the navigation structure being correctly implemented first.**

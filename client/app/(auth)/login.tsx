@@ -15,7 +15,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/services/authContext';
 import { authAPI } from '@/services/api';
-import { OswaldFonts } from '@/constants/theme';
+import { OswaldFonts, ArialFont } from '@/constants/theme';
+import { EMAIL_REGEX } from '@/utils/validators';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -26,10 +27,8 @@ export default function LoginScreen() {
   const { signIn } = useAuth();
   const insets = useSafeAreaInsets();
 
-  const validateEmail = (emailText: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(emailText);
-  };
+  const validateEmail = (emailText: string): boolean =>
+    EMAIL_REGEX.test(emailText);
 
   const handleLogin = async () => {
     setError(null);
@@ -56,7 +55,7 @@ export default function LoginScreen() {
     try {
       const response = await authAPI.login(email.trim(), password);
       const authData = response.data.data || response.data;
-      const { accessToken, customer_id } = authData;
+      const { accessToken, user_id, customer_id, courier_id } = authData;
 
       if (!accessToken) {
         setError('No authentication token received from server');
@@ -64,14 +63,24 @@ export default function LoginScreen() {
         return;
       }
 
-      if (!customer_id) {
-        setError('This account is not registered as a customer.');
+      if (!customer_id && !courier_id) {
+        setError('This account is not associated with any role.');
         setLoading(false);
         return;
       }
 
-      await signIn(email, accessToken, customer_id);
-      router.replace('/(tabs)/(restaurant)/index');
+      await signIn(email, accessToken, user_id ?? null, customer_id ?? null, courier_id ?? null);
+
+      const isCustomer = customer_id != null;
+      const isCourier = courier_id != null;
+
+      if (isCustomer && isCourier) {
+        router.replace('/(auth)/account-selection');
+      } else if (isCustomer) {
+        router.replace('/(tabs)/(restaurant)');
+      } else {
+        router.replace('/(courier)/deliveries');
+      }
     } catch (err: any) {
       setLoading(false);
 
@@ -212,6 +221,7 @@ const styles = StyleSheet.create({
   },
   welcomeSubtitle: {
     fontSize: 14,
+    fontFamily: ArialFont,
     color: '#666666',
     marginBottom: 20,
   },
@@ -220,6 +230,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 13,
+    fontFamily: ArialFont,
     fontWeight: '600',
     color: '#222126',
     marginBottom: 6,

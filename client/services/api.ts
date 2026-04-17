@@ -33,7 +33,8 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized - could refresh token or logout
+      // Token is expired or invalid. The auth guard in _layout.tsx will redirect
+      // to login once AuthContext detects the signed-out state; no action needed here.
       console.error('Unauthorized access - token may be expired');
     }
     return Promise.reject(error);
@@ -62,8 +63,21 @@ export const restaurantsAPI = {
 export const ordersAPI = {
   getHistory: () =>
     apiClient.get('/api/v1/orders'),
-  create: (orderData: any) =>
+  getPendingOrders: () =>
+    apiClient.get('/api/v1/orders/pending'),
+  getCourierOrders: (courierId: number) =>
+    apiClient.get(`/api/v1/orders?type=courier&id=${courierId}`),
+  create: (orderData: object) =>
     apiClient.post('/api/v1/orders', orderData),
   getById: (id: number | string) =>
     apiClient.get(`/api/v1/orders/${id}`),
+  update: (id: number | string, dto: {
+    restaurant_id: number;
+    customer_id: number;
+    order_status_id: number;
+    restaurant_rating: number | null;
+  }) =>
+    apiClient.put(`/api/v1/orders/${id}`, dto),
+  assignCourier: (orderId: number | string, courierId: number) =>
+    apiClient.put(`/api/v1/orders/${orderId}/courier`, { courier_id: courierId }),
 };

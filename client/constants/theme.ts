@@ -30,6 +30,8 @@ export const OswaldFonts = {
   bold: 'Oswald_700Bold',
 };
 
+export const ArialFont = 'Arial';
+
 export const Fonts = Platform.select({
   ios: {
     /** iOS `UIFontDescriptorSystemDesignDefault` */

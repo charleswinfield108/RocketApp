@@ -1,10 +1,49 @@
-# RocketFood Delivery
+# RocketFood Delivery - Mobile App (Module 14)
 
 ## Project Description
 
-RocketFood Delivery is a mobile app that lets customers discover local restaurants, browse their menus, and place food delivery orders — all from their phone. Once an order is placed, customers can track its status and view their full order history at any time.
+RocketFood Delivery is an extended React Native mobile application built with Expo that enables both customers and couriers to interact with the food delivery platform. This project represents **Module 14: Mobile Development 2** — a direct continuation of Module 13.
 
-The app is built for everyday users who want a fast, simple way to order food without needing to call a restaurant or navigate a complicated website. It solves the common problem of fragmented ordering experiences by bringing restaurant discovery, ordering, and history tracking into a single, easy-to-use mobile interface.
+**Module 13 (Customer App):** Customers can discover local restaurants, browse menus, place food delivery orders, and track order history.
+
+**Module 14 (Extended App):** The app has been expanded with:
+- **Courier Experience:** Couriers view and manage assigned deliveries with status progression (Pending → In Transit → Delivered)
+- **Role-Based Navigation:** Users registered as both customers and couriers see an account selection screen after login
+- **Account Management:** Both customers and couriers can view and update their contact details
+- **Notification Opt-In:** Customers can opt in to SMS and/or email order confirmations
+- **Brand Typography:** Fully integrated Arial and Oswald font families across all screens
+
+The app is built for everyday users wanting a fast, simple way to order food (customers) or accept and manage deliveries (couriers) without fragmented experiences.
+
+---
+
+## Module 14 Features
+
+### 1. Courier Experience
+- View assigned deliveries with customer details
+- Progress order status: Pending → In Transit → Delivered
+- Locked status once order reaches DELIVERED
+- Courier delivery history and statistics
+
+### 2. Role-Based Access
+- Account selection screen for dual-role users (customer + courier)
+- Conditional navigation based on selected role
+- Session-scoped role switching
+
+### 3. Account Management
+- Customer account details screen (editable contact info)
+- Courier account details screen (editable contact info)
+- Role-specific account management interfaces
+
+### 4. Notification Opt-In
+- SMS notification checkbox in order confirmation
+- Email notification checkbox in order confirmation
+- Preferences saved with order metadata
+
+### 5. Brand Typography
+- **Oswald:** Applied to headings and primary UI elements
+- **Arial:** Applied to body text and secondary content
+- Consistent font system across all screens
 
 ---
 
@@ -34,17 +73,33 @@ RocketApp/
 ├── client/                        # React Native / Expo app
 │   ├── app/
 │   │   ├── (auth)/                # Login screen
+│   │   ├── (account-selection)/   # Role selection screen (NEW)
 │   │   ├── (tabs)/
-│   │   │   ├── (restaurant)/      # Restaurant list + menu screens
-│   │   │   └── history.tsx        # Order history screen
-│   │   └── _layout.tsx            # Root layout + auth guard
+│   │   │   ├── (restaurant)/      # Restaurant list + menu screens (Customer)
+│   │   │   ├── (courier)/         # Courier deliveries + management (NEW)
+│   │   │   ├── history.tsx        # Order history screen (Customer)
+│   │   │   ├── profile.tsx        # Account management (Updated)
+│   │   │   └── explore.tsx        # Restaurant discovery (Customer)
+│   │   └── _layout.tsx            # Root layout + role-based auth guard
 │   ├── components/                # Reusable UI components
-│   ├── constants/                 # Theme + navigation constants
+│   │   ├── ConfirmationModal.tsx  # Order confirmation with notification opt-in (Updated)
+│   │   ├── Header.tsx             # Brand typography (Updated)
+│   │   ├── MenuItem.tsx           # Menu item display
+│   │   ├── RestaurantCard.tsx     # Restaurant card
+│   │   └── ...                    # Other shared components
+│   ├── constants/
+│   │   ├── theme.ts             # Brand colors & Oswald/Arial fonts (Updated)
+│   │   └── navigation.ts         # Navigation constants
 │   ├── services/                  # API client, auth context, service helpers
+│   │   ├── api.ts                # API client with courier endpoints (Updated)
+│   │   ├── authContext.tsx       # Auth + role management (Updated)
+│   │   ├── menuService.ts        # Menu service
+│   │   ├── orderHistoryService.ts # Order history service
+│   │   └── courierService.ts     # Courier deliveries service (NEW)
 │   └── .env.example               # Environment variable template
 │
 ├── server/
-│   └── serverJAVA/                # Spring Boot REST API
+│   └── serverJAVA/                # Spring Boot REST API (Not modified)
 │       └── src/main/java/...
 │           ├── controller/api/    # REST controllers
 │           ├── service/           # Business logic
@@ -55,11 +110,21 @@ RocketApp/
 │               └── application.properties
 │
 ├── ai/                            # AI-native specifications
-│   ├── 🤖-ai-spec.md
-│   └── features/                  # 10 feature spec files
+│   ├── 🤖-ai-spec.md             # AI specification (Updated for Module 14)
+│   ├── 🤖-ui-specification.md    # UI specification
+│   └── features/                  # Feature spec files
+│       ├── 🤖-courier-deliveries.feature.md (NEW)
+│       ├── 🤖-account-selection.feature.md (NEW)
+│       ├── 🤖-courier-account-management.feature.md (NEW)
+│       ├── 🤖-notification-opt-in.feature.md (NEW)
+│       ├── 🤖-brand-typography.feature.md (NEW)
+│       └── ... (other feature specs)
 │
-├── PostmanCollection.json         # Postman collection (all API endpoints)
-└── README.md
+├── PostmanCollection.json         # Postman collection (updated with courier endpoints)
+├── CONCEPTS.md                    # 3 challenging concepts
+├── LeetCode/                      # LeetCode challenge solutions
+├── README.md                      # This file
+└── submission-summary.md          # NOT committed to GitHub
 ```
 
 ---
@@ -289,11 +354,26 @@ The token is returned by the login endpoint and is automatically saved by the Po
 |---|---|---|
 | GET | `/api/v1/orders?type=customer&id=` | Get orders by customer, courier, or restaurant |
 | GET | `/api/v1/orders/pending` | Get all pending orders |
-| POST | `/api/v1/orders` | Create a new order |
+| POST | `/api/v1/orders` | Create a new order (with notification preferences) |
 | PUT | `/api/v1/orders/:id` | Update an order |
 | PUT | `/api/v1/orders/:id/courier` | Assign a courier to an order |
 | PUT | `/api/v1/orders/:id/rating` | Rate an order |
 | DELETE | `/api/v1/orders/:id` | Delete an order |
+
+#### Couriers (Module 14 - NEW)
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/v1/couriers/:id` | Get courier profile |
+| PUT | `/api/v1/couriers/:id` | Update courier contact details |
+| GET | `/api/v1/couriers/:id/deliveries` | Get courier's assigned deliveries |
+| GET | `/api/v1/deliveries/:deliveryId` | Get delivery details |
+| PUT | `/api/v1/deliveries/:deliveryId/status` | Update delivery status (Pending → In Transit → Delivered) |
+
+#### Customers (Module 14 - ENHANCED)
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/v1/customers/:id` | Get customer profile |
+| PUT | `/api/v1/customers/:id` | Update customer contact details |
 
 ### Sample Login Request
 
@@ -309,17 +389,133 @@ POST /api/v1/auth/login
 
 ## Test Credentials
 
-| Role | Email | Password |
-|---|---|---|
-| Customer | `customer@gmail.com` | `password` |
-| Customer | `both@gmail.com` | `password` |
+| Role | Email | Password | Notes |
+|---|---|---|---|
+| Customer | `customer@gmail.com` | `password` | Customer-only account |
+| Customer + Courier | `both@gmail.com` | `password` | Dual-role account (sees account selection screen) |
+| Courier | `courier@gmail.com` | `password` | Courier-only account |
+
+---
+
+## Branching Strategy
+
+This project follows a feature branch workflow:
+
+1. **Feature branches** are created from `dev`: `git checkout -b feature/<feature-name>`
+2. **Features are merged back to `dev`** via pull request
+3. **`dev` is merged to `main`** for final submission
+4. **No direct commits to `main`**
+5. **Only the `main` branch is evaluated for grading**
+
+```bash
+# Example workflow
+git checkout dev
+git pull origin dev
+git checkout -b feature/courier-deliveries
+# ... make changes ...
+git add .
+git commit -m "feat: add courier delivery management"
+git push origin feature/courier-deliveries
+# Create PR on GitHub, merge to dev after review
+# Later, dev → main for submission
+```
+
+---
+
+## Deliverables Checklist
+
+- [x] Extended mobile app with:
+  - [x] Courier section (deliveries, status management)
+  - [x] Role-based navigation (account selection screen)
+  - [x] Account management (customer and courier profiles)
+  - [x] Notification opt-in (SMS and email)
+  - [x] Brand typography (Arial and Oswald fonts)
+- [x] README.md (this file)
+- [ ] AI Specification document (`ai/🤖-ai-spec.md`)
+- [ ] Feature specification documents (`ai/features/🤖-*.feature.md`)
+- [ ] Postman collection (`PostmanCollection.json`)
+- [ ] CONCEPTS.md (3 challenging concepts with recorded video)
+- [ ] LeetCode solutions (with recorded video and screenshots)
+- [ ] Technical Demonstration video (Code Overview)
+- [ ] Submission Summary (submitted separately, NOT committed to GitHub)
+
+---
+
+## Project Constraints
+
+- **No new repository:** Expansion happens within the same Module 13 codebase
+- **Backend not modified:** Java REST API is not changed; only existing endpoints are consumed
+- **Platform compatibility:** App runs on both iOS and Android via Expo
+- **Real-device testing:** Requires a working Ngrok tunnel to local Spring Boot API
+- **Code quality:** No dead or commented-out code
+- **Component reuse:** Components must be reused across screens
+- **Status lock:** Once an order reaches DELIVERED, no further transitions allowed
+- **Deadline:** Must be submitted through the platform by assigned deadline (Friday 11:59 PM)
+
+---
+
+## Extra Miles (Optional Enhancements)
+
+Once all core requirements are completed and coach-reviewed:
+
+- [ ] **README APIs Used:** Document each API endpoint and its purpose within this README
+- [ ] **Cross-Platform UI Consistency:** Ensure UI is visually identical on both iOS and Android
+- [ ] **SMS Notifications (Twilio):** Integrate Twilio to send real SMS order confirmations
+- [ ] **Email Notifications (Notify.EU):** Integrate Notify.EU to send templated confirmation emails
+
+---
+
+## Professional Requirements
+
+This program evaluates both technical and professional skills:
+
+- **Communication:** Respond to coaches within 24 hours when contacted
+- **Progress Updates:** Provide at least 2 progress updates per week
+- **Project Reviews:** Schedule at least 1 project review per week before Friday
+- **Professionalism:** Demonstrate autonomy, initiative, professionalism, and attention to detail
+- **Submission:** Submit Submission Summary separately through the platform (NOT in GitHub)
+
+> **Note:** Failure to meet communication and progress requirements may result in a failed module.
+
+---
+
+## Challenging Concepts (See CONCEPTS.md)
+
+1. **Role-based Conditional Navigation:** Managing application state and navigation based on user role selection
+2. **Delivery Status State Machine:** Implementing locked status transitions (Pending → In Transit → Delivered)
+3. **Notification Preference Persistence:** Storing and retrieving user notification preferences with order data
+
+---
+
+## Resources
+
+- **Wireframe Templates:** Provided in platform support materials for courier screens and account selection
+- **Platform Slides:** Teaching guidance, concepts, and setup instructions
+- **Business Document:** Client project brief and requirements
+- **Requirement Checklist:** Precise grading criteria across 7 categories
+
+---
+
+## Module Information
+
+**Module:** 14 - Mobile Development 2  
+**Program:** Full-Stack Development Program  
+**Company:** Genesis Solutions  
+**Continuation of:** Module 13 - Mobile Development (Customer App)  
+**Date Started:** April 14, 2026
 
 ---
 
 ## Author
 
-**Charles Winfield**
-Full-Stack Development Student
+**Charles Winfield**  
+Junior Developer at Genesis Solutions  
+Full-Stack Development Program Student
 
-- GitHub: [github.com/YOUR_GITHUB_USERNAME](https://github.com/YOUR_GITHUB_USERNAME)
+- GitHub: [github.com/charleswinfield108](https://github.com/charleswinfield108)
 - LinkedIn: [linkedin.com/in/YOUR_LINKEDIN_USERNAME](https://linkedin.com/in/YOUR_LINKEDIN_USERNAME)
+
+---
+
+**Last Updated:** April 14, 2026  
+**Status:** Module 14 In Progress

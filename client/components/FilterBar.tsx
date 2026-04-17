@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { getPriceDisplay } from '@/utils/formatters';
 
 interface FilterBarProps {
   onRatingChange: (rating: number | null) => void;
@@ -43,7 +44,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
   const getPriceLabel = (value: number | null) => {
     if (value === null) return '-- Select --';
-    return '$'.repeat(value);
+    return getPriceDisplay(value);
   };
 
   return (

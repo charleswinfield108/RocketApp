@@ -63,7 +63,7 @@ const mapOrder = (o: ApiOrder): Order => ({
   courier: o.courier_id ? { name: o.courier_name ?? 'Unknown' } : undefined,
 });
 
-export const orderHistoryAPI = {
+const orderHistoryAPI = {
   getHistory: (customerId: number) =>
     apiClient
       .get<ApiResponse>(`/api/v1/orders?type=customer&id=${customerId}`)
