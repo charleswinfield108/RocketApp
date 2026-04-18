@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,22 +8,51 @@ import {
   ScrollView,
 } from 'react-native';
 import { Order } from '@/services/orderHistoryService';
+import { ordersAPI } from '@/services/api';
 import { OswaldFonts } from '@/constants/theme';
 
 interface OrderHistoryDetailModalProps {
   visible: boolean;
   order: Order | null;
   onClose: () => void;
+  onRatingSubmitted?: (orderId: string, rating: number) => void;
 }
 
 export const OrderHistoryDetailModal: React.FC<OrderHistoryDetailModalProps> = ({
   visible,
   order,
   onClose,
+  onRatingSubmitted,
 }) => {
+  const [selectedRating, setSelectedRating] = useState<number | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  React.useEffect(() => {
+    setSelectedRating(null);
+    setSubmitting(false);
+    setSubmitted(false);
+  }, [order?.orderId]);
+
   if (!order) return null;
 
   const total = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const existingRating = order.rating;
+  const isDelivered = order.status.toLowerCase() === 'delivered';
+  const canRate = isDelivered && !existingRating && !submitted;
+  const displayRating = submitted ? selectedRating : existingRating;
+
+  const handleSubmitRating = async () => {
+    if (!selectedRating) return;
+    setSubmitting(true);
+    try {
+      await ordersAPI.updateRating(order.orderId, selectedRating);
+      setSubmitted(true);
+      onRatingSubmitted?.(order.orderId, selectedRating);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const formatDate = (dateString: string): string => {
     try {
@@ -75,6 +104,40 @@ export const OrderHistoryDetailModal: React.FC<OrderHistoryDetailModalProps> = (
               <Text style={styles.totalLabel}>TOTAL:</Text>
               <Text style={styles.totalAmount}>$ {total.toFixed(2)}</Text>
             </View>
+
+            {/* Rating */}
+            <View style={styles.divider} />
+            <Text style={styles.ratingLabel}>Restaurant Rating:</Text>
+            {displayRating ? (
+              <View style={styles.starsRow}>
+                {[1,2,3,4,5].map((s) => (
+                  <Text key={s} style={[styles.star, s <= displayRating ? styles.starFilled : styles.starEmpty]}>★</Text>
+                ))}
+              </View>
+            ) : canRate ? (
+              <>
+                <View style={styles.starsRow}>
+                  {[1,2,3,4,5].map((s) => (
+                    <TouchableOpacity key={s} onPress={() => setSelectedRating(s)}>
+                      <Text style={[styles.star, selectedRating && s <= selectedRating ? styles.starFilled : styles.starEmpty]}>★</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                {selectedRating ? (
+                  <TouchableOpacity
+                    style={[styles.rateBtn, submitting && styles.rateBtnDisabled]}
+                    onPress={handleSubmitRating}
+                    disabled={submitting}
+                  >
+                    <Text style={styles.rateBtnText}>{submitting ? 'SUBMITTING...' : 'SUBMIT RATING'}</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </>
+            ) : (
+              <Text style={styles.noRatingText}>
+                {order.status === 'delivered' ? 'Already rated' : 'Available once delivered'}
+              </Text>
+            )}
           </ScrollView>
 
         </View>
@@ -178,5 +241,45 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '400',
     color: '#222126',
+  },
+  ratingLabel: {
+    fontSize: 14,
+    fontFamily: OswaldFonts.bold,
+    color: '#222126',
+    marginBottom: 8,
+  },
+  starsRow: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  star: {
+    fontSize: 32,
+    marginRight: 4,
+  },
+  starFilled: {
+    color: '#DA583B',
+  },
+  starEmpty: {
+    color: '#CCCCCC',
+  },
+  rateBtn: {
+    backgroundColor: '#DA583B',
+    borderRadius: 6,
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  rateBtnDisabled: {
+    opacity: 0.6,
+  },
+  rateBtnText: {
+    color: '#FFFFFF',
+    fontFamily: OswaldFonts.bold,
+    fontSize: 14,
+  },
+  noRatingText: {
+    fontSize: 13,
+    color: '#999999',
+    marginBottom: 8,
   },
 });

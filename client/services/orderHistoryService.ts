@@ -20,6 +20,7 @@ export interface Order {
   createdAt: string;
   items: OrderItem[];
   courier?: Courier;
+  rating: number | null;
 }
 
 // Shape returned by the API
@@ -40,6 +41,7 @@ interface ApiOrder {
   products: ApiProduct[];
   total_cost: number;
   created_on: string;
+  restaurant_rating: number | null;
 }
 
 interface ApiResponse {
@@ -61,6 +63,7 @@ const mapOrder = (o: ApiOrder): Order => ({
     price: p.unit_cost,
   })),
   courier: o.courier_id ? { name: o.courier_name ?? 'Unknown' } : undefined,
+  rating: o.restaurant_rating ?? null,
 });
 
 const orderHistoryAPI = {

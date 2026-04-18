@@ -80,4 +80,6 @@ export const ordersAPI = {
     apiClient.put(`/api/v1/orders/${id}`, dto),
   assignCourier: (orderId: number | string, courierId: number) =>
     apiClient.put(`/api/v1/orders/${orderId}/courier`, { courier_id: courierId }),
+  updateRating: (orderId: number | string, rating: number) =>
+    apiClient.put(`/api/v1/orders/${orderId}/rating`, { restaurant_rating: rating }),
 };
