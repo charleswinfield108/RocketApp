@@ -162,6 +162,11 @@ export default function OrderHistoryScreen() {
           setDetailModalVisible(false);
           setSelectedOrder(null);
         }}
+        onRatingSubmitted={(orderId, rating) => {
+          setOrders((prev) =>
+            prev.map((o) => (o.orderId === orderId ? { ...o, rating } : o))
+          );
+        }}
       />
     </View>
   );
